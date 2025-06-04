@@ -1,6 +1,8 @@
 from tensorflow.keras import layers, models, regularizers # type: ignore
 from tensorflow.keras.optimizers import AdamW, Adam # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping,ReduceLROnPlateau # type: ignore
+from sklearn.utils import class_weight
+import numpy as np
 from src.ui.cleanup import MemoryCleanupCallback
 
 # create the simple CNN to classify yamnet embeddings
@@ -51,6 +53,13 @@ def train_classifier(audio_classifier, train_features, train_labels, val_feature
     # add custom callbacks
     epoch_cleanup = MemoryCleanupCallback()
 
+    # get class weights to balance out the extensive bark samples
+    weights = class_weight.compute_class_weight(
+        class_weight='balanced',
+        classes=np.unique(train_labels),
+        y=train_labels
+    )
+    class_weights = dict(enumerate(weights))
     # train the model
     classifier_history = audio_classifier.fit(
         train_features, # data to train on
@@ -63,7 +72,8 @@ def train_classifier(audio_classifier, train_features, train_labels, val_feature
             early_stopping,  # stops when training becomes stagnant
             reduce_lr # reduces learning rate as training slows
             ], 
-        verbose=2 # turn on training logs
+        verbose=2, # turn on training logs
+        class_weight=class_weights
         )
     
     return classifier_history

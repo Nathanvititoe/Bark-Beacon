@@ -21,8 +21,9 @@ warnings.filterwarnings("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # import libraries and files
-import tensorflow as tf
 from termcolor import colored
+from imblearn.over_sampling import RandomOverSampler
+import numpy as np
 from sklearn.model_selection import train_test_split
 from src.ui.colors import get_acc_color, get_loss_color
 from src.prep_data.get_df import build_dataframe
@@ -56,12 +57,19 @@ NUM_EPOCHS = 100
 # Load and Split Dataset
 # %%
 df = build_dataframe(AUDIO_ROOT_PATH)
+
+# split dataset
 train_data, val_data = train_test_split(df, test_size=valid_split, stratify=df['classID'], random_state=42)
 label_names = sorted(df['class'].unique())
 num_classes = len(label_names) # get total number of classes
+
+# preprocess/load the data
 train_features, train_labels = load_data(AUDIO_ROOT_PATH, train_data, SAMPLE_RATE, DURATION_SEC, df_type="training")
 val_features, val_labels = load_data(AUDIO_ROOT_PATH, val_data, SAMPLE_RATE, DURATION_SEC, df_type="validation")
 
+# oversample to help with class imbalance
+ros = RandomOverSampler(random_state=42)
+train_features, train_labels = ros.fit_resample(train_features, train_labels)
 # %% [markdown]
 # Build and Train the Classifier
 # %%
