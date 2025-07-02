@@ -44,6 +44,7 @@ def visualize_stats(classifier_history):
     plt.show() # display them
 
 # function to plot/compare raw v processed audio waveforms
+# TODO: Raw and processed are pulling two separate samples 
 def plot_waveform_comparison(class_waveforms_raw, class_waveforms_proc):
     num_classes = len(class_waveforms_raw) # get number of classes
     fig, axes = plt.subplots(num_classes, 2, figsize=(15, 2*num_classes), constrained_layout=True) # create subplots
@@ -124,7 +125,7 @@ def plot_spectrograms(class_spectrograms):
     for j in range(i + 1, len(axes)):
         axes[j].axis('off')
 
-    fig.suptitle("UrbanSound Spectrograms\n", fontsize=14) # add title
+    fig.suptitle("Dog Vocalization Spectrograms\n", fontsize=14) # add title
     plt.tight_layout() # adjust layout
     plt.show() # display plot
 

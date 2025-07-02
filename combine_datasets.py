@@ -7,7 +7,9 @@ target_categories = ["bark", "growl", "grunt", "howl", "whine"]
 # Source roots
 sources = [
     "dataset/kaggle_dataset",
-    "dataset/wav_25May2025"
+    "dataset/wav_25May2025",
+    "dataset/wav_2July2025",
+    
 ]
 
 # Output root

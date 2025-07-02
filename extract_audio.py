@@ -5,8 +5,8 @@ import librosa
 import soundfile as sf
 import numpy as np
 
-mp4_root = "dataset/mp4_25May2025" # mp4 dir
-wav_root = "dataset/wav_25May2025" # new wav dir
+mp4_root = "dataset/cryingmp4s" # mp4 dir
+wav_root = "dataset/cryingwavs" # new wav dir
 
 # loop through mp4 directory and subdirectories
 for root, _, files in os.walk(mp4_root):

@@ -18,7 +18,7 @@ def create_classifier(num_classes):
         layers.Dropout(0.4), # randomly drop 40% of neurons (prevents overfitting)
         
         # output layer
-        layers.Dense(num_classes, activation='softmax')  # dense output layer, output num_classes
+        layers.Dense(num_classes, activation='softmax')  # dense output layer w/ softmax for categorical cross
     ])
     
     # compile the model
@@ -27,6 +27,7 @@ def create_classifier(num_classes):
         loss='sparse_categorical_crossentropy', # categorical crossentropy for multi-classification
         metrics=['accuracy'] # measure accuracy
     )
+
 
     return audio_classifier
 
