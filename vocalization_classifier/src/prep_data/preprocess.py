@@ -48,8 +48,8 @@ def load_data(audio_path, df, sample_rate, duration, df_type):
     class_spectrograms = {}
 
     # plot waveforms for each class (raw and pre-processed)
-    if df_type.lower() == "training":
-        get_waveform_plots(audio_path, df, sample_rate, duration)
+    # if df_type.lower() == "training":
+        # get_waveform_plots(audio_path, df, sample_rate, duration)
     
     # define tqdm progress bar for ui
     progress_bar = tqdm( df.iterrows(),
@@ -77,9 +77,9 @@ def load_data(audio_path, df, sample_rate, duration, df_type):
         except Exception as e: 
             print(f"Skipping {path}: {e}")
 
-    if df_type.lower() == "validation":
+    # if df_type.lower() == "validation":
         # create plot w/ a spectrogram for each class
-        plot_spectrograms(class_spectrograms)
+        # plot_spectrograms(class_spectrograms)
 
     return np.stack(yam_embeddings), np.array(labels) # return features/labels
 

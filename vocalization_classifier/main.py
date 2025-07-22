@@ -1,22 +1,7 @@
-
-# %% [markdown]
-# Install all dependencies
-# %%
-# import subprocess
-# from pathlib import Path
-# try:
-#     reqs = Path.home() / "CSC370" / "Assignment5.1" / "requirements.txt"
-#     success = subprocess.run(["pip", "install", "-r", str(reqs)], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-#     if success:
-#         print("Successfully installed all dependencies")
-# except Exception as e:
-#     print(f"Failed to install dependencies: {e}")
-
-# %% [markdown]
-# Setup - imports and variables
-# %%
 import warnings
 import os
+
+# from ui.user_input import get_prediction
 warnings.filterwarnings("ignore") 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -24,24 +9,30 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from termcolor import colored
 from imblearn.over_sampling import RandomOverSampler
 import numpy as np
+from tensorflow.keras.models import load_model # type: ignore
 from sklearn.model_selection import train_test_split
 from src.ui.colors import get_acc_color, get_loss_color
 from src.prep_data.get_df import build_dataframe
 from src.prep_data.preprocess import load_data
 from src.audio_classifier.build_model import create_classifier, train_classifier
-# from src.audio_classifier.test_focal_loss import create_classifier_focal, train_classifier_focal
 from src.ui.cleanup import final_cleanup
 from sklearn.metrics import accuracy_score
-# from src.checks.gpu_check import check_gpu 
 from src.prep_data.evaluate_dataset import plot_dataset
-# from src.ui.visualization import visualize_stats, plot_confusion_matrix
-# from src.ui.user_input import get_prediction
+from src.ui.visualization import visualize_stats, plot_confusion_matrix
+from tf_lite_utils.tflite_utils import compare_models, load_lite_model, lite_inference
+from tf_lite_utils.converter.tflite_converter import convert_for_microcontroller, get_representative_dataset
 
 # force gpu usage
 # assert tf.config.list_physical_devices('GPU'), "No GPU available. Exiting."
 
 # directory paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # path to vocalization_classifier/
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+
+FULL_MODEL_PATH = os.path.join(MODEL_DIR, "BarkBeacon_Full.h5")
+LITE_MODEL_PATH = os.path.join(MODEL_DIR, "BarkBeacon_Lite.tflite")
 AUDIO_ROOT_PATH = '../dataset/combined'
+
 
 # config variables
 valid_split = 0.1 # % of dataset to use for validation 
@@ -50,16 +41,10 @@ SAMPLE_RATE = 16000 # sample rate to downsample to
 DURATION_SEC = 4 # time length of audio file (seconds)
 NUM_EPOCHS = 100
 
-# %% [markdown]
-# Check Device 
-# %%
 # check_gpu() # check if gpu is being used
 
-# %% [markdown]
-# Load and Split Dataset
-# %%
 df = build_dataframe(AUDIO_ROOT_PATH)
-plot_dataset(df)
+# plot_dataset(df)
 
 # split dataset
 train_data, val_data = train_test_split(df, test_size=valid_split, stratify=df['classID'], random_state=42)
@@ -70,44 +55,25 @@ num_classes = len(label_names) # get total number of classes
 train_features, train_labels = load_data(AUDIO_ROOT_PATH, train_data, SAMPLE_RATE, DURATION_SEC, df_type="training")
 val_features, val_labels = load_data(AUDIO_ROOT_PATH, val_data, SAMPLE_RATE, DURATION_SEC, df_type="validation")
 
-# test dumb model (untrained)
-bark_class_id = np.bincount(train_labels).argmax()
-dumb_preds = np.full_like(val_labels, fill_value=bark_class_id)
-dumb_acc = accuracy_score(val_labels, dumb_preds)
-print(f"Dumb baseline (always predict bark): {dumb_acc:.4f}")
 # oversample to help with class imbalance
 ros = RandomOverSampler(random_state=42)
 train_features, train_labels = ros.fit_resample(train_features, train_labels)
-# %% [markdown]
-# Build and Train the Classifier
-# %%
+
 audio_classifier = create_classifier(num_classes)
 classifier_history = train_classifier(audio_classifier, train_features, train_labels, val_features, val_labels, NUM_EPOCHS, BATCH_SIZE)
 
-# # test focal loss
-# audio_classifier = create_classifier_focal(num_classes)
-# classifier_history = train_classifier_focal(audio_classifier, train_features, train_labels, val_features, val_labels, NUM_EPOCHS, BATCH_SIZE)
-    
-# %% [markdown]
-# Evaluate and Plot Results
-# %%
-print("Final Evaluation:")
-loss, acc = audio_classifier.evaluate(val_features, val_labels) # evaluate model
-acc_color = get_acc_color(acc)
-loss_color = get_loss_color(loss)
-print(colored(f"\nValidation Loss:     {loss:.4f}\n", loss_color))
-print(colored(f"Validation Accuracy: {acc:.4f} ({round((acc*100),1)}%)\n ", acc_color))
+# save full model to h5 file
+audio_classifier.save(FULL_MODEL_PATH)
 
-# plot training results
+# compare model accuracy
+compare_models(val_features, val_labels, FULL_MODEL_PATH, LITE_MODEL_PATH)
+
+# # plot training results
 # plot_confusion_matrix(audio_classifier, val_features, val_labels, label_names) # create confusion matrix
 # visualize_stats(classifier_history) # visualize the loss/acc
 
-# %% [markdown]
-# Get User Input and Output Prediction
-
-# %%
-# take user input, get prediction, display to user
-# get_prediction(audio_classifier, SAMPLE_RATE, DURATION_SEC, label_names, user_predict_df, AUDIO_ROOT_PATH)
+# TODO: fix prediction to test custom files
+# get_prediction(audio_classifier, SAMPLE_RATE, DURATION_SEC, label_names, train_features, AUDIO_ROOT_PATH)
 
 final_cleanup()
 print("Exiting...")
