@@ -1,42 +1,79 @@
-Dataset - 
-    
-    empty on github but the dataset can be found at:
-    https://www.kaggle.com/datasets/nathanvititoe/dog-vocalization-dataset
+# Bark Beacon: Dog Vocalization Classifier
 
-images -
+A custom audio classification model for classifying dog vocalizations (bark, growl, whine, howl) using transfer learning with TensorFlow and YAMNet, and then converted to TensorFlow Lite and a C array for deployment on an Arduino Nano 33 BLE Sense Rev2.
 
-    a few screenshots throughout model progress as it was created
+---
 
-visualizations -
+##  Dataset
 
-    generated matplotlib images of audio waveforms, spectrograms and dataset class distribution
+After retrieving the data I collected, place it in the `datasets/` folder, the dataset can be downloaded from Kaggle:
 
-Within vocalization_classifier -
+[Dog Vocalization Dataset (Kaggle)](https://www.kaggle.com/datasets/nathanvititoe/dog-vocalization-dataset)
 
-    ConvertForArduino contains:
-        get_lite_model.py - a script to convert a saved h5 of the full model to a TF lite model
-        get_c_array.py - a script to convert a saved TF lite model to a c array, which is required to      upload the model to an Arduino 
+The `/combined` directory is a collection of all the data I collected separated into the 4 distinct classes - bark, growl, whine and howl. That is what I used to train the model.  
 
-    Models contains: 
-        h5 files - full model
-        tflite files - quantized models for microcontrollers
-        cc files - c arrays of the tf lite models, needed for Arduino use
+---
 
-    src contains: 
-        All the code required to create the original full model, train it, and visualize the data
+## Assets
 
-    tf_lite_utils contains: 
-        converter - utility functions for converting h5 (full model) files to tf lite models
-        tflite_utils - utility functions to 
-            load_lite_model - load a lite model from a file
-            lite_inference - get an inference from the saved tf lite model
-            compare_models - gets predictions from the full h5 model and the tf lite model to compare   accuracy scores
-    main.py -
-        runs all logic to preprocess data, split dataset, train full model, convert to tf lite, and compare the accuracy scores between the full model and the lite model
-combine_datasets.py - 
+- **Images**:  
+  Includes various screenshots captured throughout model development.
 
-    A script for combining various folders of datasets into one large combined dataset with classes for bark, growl, whine and howl only (taken from the end of the file names)
+- **Visualizations**:  
+  Generated using `matplotlib`:
+  - Raw audio waveforms  
+  - Mel spectrograms  
+  - Class distribution of the dataset
 
-extract_audio.py - 
+---
 
-    A script for preprocessing individual audio clips, converting them all to monochannel with a 16 kHz sample rate and then denoising them by removing all audio background noise based on a 1s sample 
+## Project Structure
+
+### `vocalization_classifier/`
+
+#### ➤ `ConvertForArduino/`
+Scripts to prepare models for Arduino microcontroller deployment:
+- `get_lite_model.py`: Converts the full, trained `.h5` model to TensorFlow Lite format.
+- `get_c_array.py`: Converts a `.tflite` model to a `.cc` C array (needed for Arduino inference).
+
+#### ➤ `Models/`
+Contains trained model artifacts:
+- `.h5` files – Full models
+- `.tflite` files – Quantized models for embedded inference
+- `.cc` files – C arrays of TFLite models for Arduino integration
+
+#### ➤ `src/`
+All logic for:
+- Creating the model architecture
+- Training
+- Data loading and preprocessing
+- Dataset visualization
+
+#### ➤ `tf_lite_utils/`
+Utility functions for working with TensorFlow Lite:
+- `converter.py`: For converting `.h5` to `.tflite`
+- `tflite_utils.py`:
+  - `load_lite_model()`: Load `.tflite` model from file
+  - `lite_inference()`: Run inference with a TFLite model (for comparisons)
+  - `compare_models()`: Compare `.h5` vs `.tflite` model predictions
+
+#### ➤ `main.py`
+combines the entire pipeline:
+- Data preprocessing  
+- Dataset splitting  
+- Model training  
+- Model conversion to TFLite  
+- Accuracy comparison between `.h5` and `.tflite` models
+
+---
+
+## Utility Scripts
+
+- **`combine_datasets.py`**  
+  Combines all collected dataset folders into a single `combined` set containing only the needed classes: `bark`, `growl`, `whine`, `howl`  
+  *(Class names are pulled from the filenames)*
+
+- **`extract_audio.py`**  
+  Preprocesses individual audio clips:
+  - Converts all clips to mono, 16kHz  
+  - Applies background noise removal using a 0.1 second sample for denoising (most samples are very short so the denoise sample must be even shorter)
