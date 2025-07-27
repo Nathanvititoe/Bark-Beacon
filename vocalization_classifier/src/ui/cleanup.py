@@ -2,7 +2,10 @@ import gc
 import tensorflow as tf
 from tensorflow.keras.callbacks import Callback # type: ignore
 from numba import cuda
-
+"""
+This includes functions and callbacks for the model to garbage collect and cleanup
+in order to save RAM and GPU usage during model training
+"""
 # cleanup to run at the end of model use
 def final_cleanup():
     print("\n\nCleaning up...\n")

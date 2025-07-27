@@ -1,6 +1,6 @@
-from tqdm import tqdm
-from termcolor import colored
-
+"""
+This simply gets different colors for accuracy/loss terminal output
+"""
 # returns a color based on the accuracy number (target >= 92%)
 def get_acc_color(acc):
     if acc >= 0.92:

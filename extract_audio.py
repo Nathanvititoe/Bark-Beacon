@@ -3,7 +3,11 @@ from pydub import AudioSegment
 import noisereduce as nr
 import librosa
 import soundfile as sf
-import numpy as np
+
+"""
+Convert mp4 files to wav files so they can be converted to YAMnet embeddings for model training
+Also, remove background noise from files using a 0.1s denoise sample 
+"""
 
 mp4_root = "dataset/cryingmp4s" # mp4 dir
 wav_root = "dataset/cryingwavs" # new wav dir

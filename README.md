@@ -1,6 +1,6 @@
 # Bark Beacon: Dog Vocalization Classifier
 
-A custom audio classification model for classifying dog vocalizations (bark, growl, whine, howl) using transfer learning with TensorFlow and YAMNet, and then converted to TensorFlow Lite and a C array for deployment on an Arduino Nano 33 BLE Sense Rev2.
+A custom audio classification model for classifying dog vocalizations (bark, growl, whine, howl) using transfer learning with TensorFlow and YAMNet, and then converted to TensorFlow Lite and C++/header pairs for deployment on an Arduino Nano 33 BLE Sense Rev2.
 
 ---
 
@@ -33,14 +33,15 @@ The `/combined` directory is a collection of all the data I collected separated 
 
 #### ➤ `ConvertForArduino/`
 Scripts to prepare models for Arduino microcontroller deployment:
-- `get_lite_model.py`: Converts the full, trained `.h5` model to TensorFlow Lite format.
-- `get_c_array.py`: Converts a `.tflite` model to a `.cc` C array (needed for Arduino inference).
+- `get_lite_model.py`: Converts the full, trained `.keras` model to TensorFlow Lite format.
+- `get_cpp_array.py`: Converts a `.tflite` model to a `.cpp` array (needed for Arduino inference) with a matching header file (`.h`).
 
 #### ➤ `Models/`
 Contains trained model artifacts:
-- `.h5` files – Full models
+- `.keras` files – Full models
 - `.tflite` files – Quantized models for embedded inference
-- `.cc` files – C arrays of TFLite models for Arduino integration
+- `.cpp` files – C++ arrays of TFLite models for Arduino integration
+- `.h` files - header files that pair with the C++ models
 
 #### ➤ `src/`
 All logic for:
@@ -51,11 +52,11 @@ All logic for:
 
 #### ➤ `tf_lite_utils/`
 Utility functions for working with TensorFlow Lite:
-- `converter.py`: For converting `.h5` to `.tflite`
+- `converter.py`: For converting `.keras` to `.tflite`
 - `tflite_utils.py`:
   - `load_lite_model()`: Load `.tflite` model from file
   - `lite_inference()`: Run inference with a TFLite model (for comparisons)
-  - `compare_models()`: Compare `.h5` vs `.tflite` model predictions
+  - `compare_models()`: Compare `.keras` vs `.tflite` model predictions
 
 #### ➤ `main.py`
 combines the entire pipeline:
@@ -63,8 +64,7 @@ combines the entire pipeline:
 - Dataset splitting  
 - Model training  
 - Model conversion to TFLite  
-- Accuracy comparison between `.h5` and `.tflite` models
-
+- Accuracy comparison between `.keras` and `.tflite` models
 ---
 
 ## Utility Scripts

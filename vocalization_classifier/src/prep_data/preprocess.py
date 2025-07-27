@@ -8,6 +8,9 @@ import soundfile as sf
 from tqdm import tqdm
 from src.ui.visualization import plot_spectrograms, plot_waveform_comparison
 
+"""
+This file contains various functions for preprocessing individual audio files in the dataset
+"""
 
 # load YamNet as pretrained model
 yamnet_model = hub.load("https://tfhub.dev/google/yamnet/1")
@@ -51,6 +54,7 @@ def load_data(audio_path, df, sample_rate, duration, df_type):
     # if df_type.lower() == "training":
         # get_waveform_plots(audio_path, df, sample_rate, duration)
     
+    print("\n") # create space before progress bar
     # define tqdm progress bar for ui
     progress_bar = tqdm( df.iterrows(),
         total=len(df), # dataframe length

@@ -4,6 +4,10 @@ from sklearn.metrics import ConfusionMatrixDisplay
 from IPython.display import Audio, display, Markdown
 import matplotlib.lines as mlines
 plt.style.use('dark_background')
+
+"""
+Various functions for creating data visualization using Matplotlib
+"""
 # get jupyter to display plots in-line
 try:
     get_ipython() # type: ignore

@@ -4,6 +4,10 @@ from tensorflow.keras.callbacks import EarlyStopping,ReduceLROnPlateau # type: i
 from sklearn.utils import class_weight
 import numpy as np
 from src.ui.cleanup import MemoryCleanupCallback
+"""
+This file has callable functions for creating the audio classification model, as well as training it,
+and allowing validation testing by returning the model_history from the training function
+"""
 
 # create the simple CNN to classify yamnet embeddings
 def create_classifier(num_classes):
@@ -33,6 +37,8 @@ def create_classifier(num_classes):
 
 # function to train and validate the classifier 
 def train_classifier(audio_classifier, train_features, train_labels, val_features, val_labels, num_epochs, batch_size):
+    print("\n") # start training w new line
+    
     # define callbacks to refine training
     early_stopping = EarlyStopping(
         monitor='val_loss', # what to monitor

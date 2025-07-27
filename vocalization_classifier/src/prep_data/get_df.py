@@ -1,6 +1,8 @@
 import pandas as pd
 import os
-
+"""
+ this converts the dataset to a pandas dataframe that can be used by tensorflow for model creation  
+"""
 def build_dataframe(combined_root):
     rows = []
     class_map = {}  # map class name to ID

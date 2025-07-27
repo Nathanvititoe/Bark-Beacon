@@ -6,16 +6,11 @@ from termcolor import colored
 from src.prep_data.preprocess import load_file, get_yamnet_embedding
 from src.ui.visualization import audio_sampler
 # TODO: REWORK 
-# tested custom files pulled from internet (not included in dataset)
-#   gun shots                      ✔
-#   car-horn                       ✔
-#   engine idle                    ✔
-#   old-car horn                   ✔
-#   fire-siren                     ✔
-#   police-sirens                  ✔
-#   untrained_sound (baby coo)     ✔
-#   untrained_sound2 (wind chimes) ✔
-
+"""
+[IMPORTANT] This has not yet been integrated into the Bark Beacon Audio Classifier, but was 
+leftover from a previous project, and included because it may be useful for future
+work
+"""
 
 # function to take input from user and display model prediction functionality
 def get_prediction(classifier, sample_rate, duration, class_names, user_predict_df, audio_root_path):

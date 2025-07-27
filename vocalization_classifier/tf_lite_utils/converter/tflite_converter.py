@@ -1,10 +1,13 @@
 import numpy as np
 import tensorflow as tf
 import os
-
+"""
+Functions for converting full model files (.keras) to tf lite models (.tflite), and then analyzing the specs of 
+the tflite model to verify if it is compatible with whatever microcontroller you plan to use
+"""
 # convert full model to tf lite for microcontrollers
-def convert_for_microcontroller(h5_model_path, tflite_output_path, rep_dataset):
-    model = tf.keras.models.load_model(h5_model_path)
+def convert_for_microcontroller(full_model_path, tflite_output_path, rep_dataset):
+    model = tf.keras.models.load_model(full_model_path)
 
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
@@ -34,14 +37,14 @@ def get_representative_dataset(val_features):
 def analyze_tflite_model(tflite_path):
     # get model file size
     model_size_kb = os.path.getsize(tflite_path) / 1024
-    print(f"\n📦 TFLite Model Size: {model_size_kb:.2f} KB")
+    print(f"\n TFLite Model Size: {model_size_kb:.2f} KB")
 
     interpreter = tf.lite.Interpreter(model_path=tflite_path)
     interpreter.allocate_tensors()
 
     # input tensor info
     input_details = interpreter.get_input_details()
-    print("\n🔍 Input Tensor(s):")
+    print("\n Input Tensor(s):")
     for d in input_details:
         print(f"  - Name: {d['name']}")
         print(f"    Shape: {d['shape']}")

@@ -6,7 +6,9 @@ from termcolor import colored
 from ai_edge_litert.interpreter import Interpreter
 from src.ui.colors import get_acc_color, get_loss_color
 from tf_lite_utils.converter.tflite_converter import convert_for_microcontroller, get_representative_dataset
-
+"""
+Utility functions for testing a tf lite model, and comparing its accuracy to a full model
+"""
 
 # load the lite model for inference
 def load_lite_model(tflite_path):
@@ -37,13 +39,10 @@ def lite_inference(val_features, interpreter, input_details, output_details):
 
 
 # function to compare full model to microcontroller lite model
-def compare_models(val_features, val_labels, h5_model_path, lite_model_path):
+def compare_models(val_features, val_labels, full_model_path, lite_model_path):
     # get full model
-    model = tf.keras.models.load_model(h5_model_path)
+    model = tf.keras.models.load_model(full_model_path)
     
-    # get lite model
-    rep_dataset = get_representative_dataset(val_features) # get dataset for lite model
-    convert_for_microcontroller(h5_model_path, lite_model_path, rep_dataset) # convert to tf lite
     interpreter, input_details, output_details = load_lite_model(lite_model_path) # load lite model
     
     # get inferences in same format
@@ -54,18 +53,14 @@ def compare_models(val_features, val_labels, h5_model_path, lite_model_path):
     # get accuracy scores
     full_model_acc = accuracy_score(val_labels, full_model_preds_classes)
     tflite_acc = accuracy_score(val_labels, tflite_preds_classes)
-    loss, acc = model.evaluate(val_features, val_labels) 
     
-    # get colors
-    acc_color = get_acc_color(acc)
-    loss_color = get_loss_color(loss)
+    full_acc_color = get_acc_color(full_model_acc) # get full model colors
+    lite_acc_color = get_acc_color(tflite_acc) # get lite model color
     
     # output results
     print("\n------------------Full Model---------------------")
-    print(colored(f"Full Model Val Loss:     {loss:.4f}\n", loss_color))
-    print(colored(f"Full Model Val Acc: {acc:.4f} ({round((acc*100),1)}%)\n ", acc_color))
+    print(colored(f"Full Model Val Acc: {full_model_acc:.4f} ({round((full_model_acc*100),1)}%)\n ", full_acc_color))
     print("\n\n------------------Lite Model---------------------")
-    lite_acc_color = get_acc_color(tflite_acc)
     print(colored(f"Lite Val Acc: {tflite_acc:.4f} ({round((tflite_acc*100),1)}%)\n", lite_acc_color))
 
     # check model size for integration

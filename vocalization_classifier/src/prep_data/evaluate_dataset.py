@@ -1,4 +1,6 @@
-import pandas as pd
+"""
+ this plots the class distribution of the dataset as a bar graph to look for class imbalance
+"""
 import matplotlib.pyplot as plt
 plt.style.use('dark_background')
 
