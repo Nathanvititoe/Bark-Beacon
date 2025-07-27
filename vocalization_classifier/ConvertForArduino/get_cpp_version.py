@@ -73,8 +73,8 @@ def convert_tflite_to_cpp(LITE_MODEL_PATH):
     print(f"Version #: {version}")
 
     # write latest copies to top level
-    latest_cpp = os.path.join(MODEL_DIR, "audio_classifier.cpp")
-    latest_h = os.path.join(MODEL_DIR, "audio_classifier.h")
+    latest_cpp = os.path.join(latest_dir_path, "audio_classifier.cpp")
+    latest_h = os.path.join(latest_dir_path, "audio_classifier.h")
     shutil.copy(versioned_cpp_path, latest_cpp)
     shutil.copy(versioned_h_path, latest_h)
     print(f"Latest version copied to:\n  - {latest_cpp}\n  - {latest_h}")

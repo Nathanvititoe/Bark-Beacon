@@ -77,3 +77,49 @@ combines the entire pipeline:
   Preprocesses individual audio clips:
   - Converts all clips to mono, 16kHz  
   - Applies background noise removal using a 0.1 second sample for denoising (most samples are very short so the denoise sample must be even shorter)
+
+# Running on Arduino
+**Reference:** [Arduino Nano 33 BLE Sense ML Guide](https://docs.arduino.cc/tutorials/nano-33-ble-sense/get-started-with-machine-learning/)
+
+### If the model is already trained
+1. Copy the appropriate `.cpp` and `.h` files from:  
+   `vocalization_classifier/models/`  
+   to your Arduino sketch folder.
+2.  In your Arduino sketch:
+   - Include the copied files using `#include`.
+   - Use the **recommended Arduino libraries** for running inference (e.g., `Arduino_TensorFlowLite`).
+
+### If you're starting from scratch
+1. Place the dataset in the `dataset/` directory.
+2. Install required Python packages:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+- Run the training and conversion pipeline:
+
+   ```bash
+   python vocalization_classifier/main.py
+   ```
+    This will:
+   - Preprocess the dataset
+   - Train the full model
+   - Generate:
+     - `Bark_Beacon_Full.keras`
+     - `Bark_Beacon_Lite.tflite`
+     - `audio_classifier_v(?).cpp` and `audio_classifier_v(?).h` for Arduino
+- Copy the generated `.cpp` and `.h` files from:
+
+   ```
+   vocalization_classifier/models/{your_version}
+   ```
+   or
+   ```
+   vocalization_classifier/models/latest
+   ```
+   to your Arduino sketch folder.
+- In your Arduino sketch, include the model files and set up inference as described in the Arduino ML guide:
+
+   ```cpp
+   #include "audio_classifier.h"
+   ```

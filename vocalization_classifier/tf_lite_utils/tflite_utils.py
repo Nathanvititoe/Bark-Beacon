@@ -4,8 +4,8 @@ import tensorflow as tf
 import numpy as np
 from termcolor import colored
 from ai_edge_litert.interpreter import Interpreter
-from src.ui.colors import get_acc_color, get_loss_color
-from tf_lite_utils.converter.tflite_converter import convert_for_microcontroller, get_representative_dataset
+from src.ui.colors import get_acc_color
+
 """
 Utility functions for testing a tf lite model, and comparing its accuracy to a full model
 """

@@ -1,8 +1,4 @@
-import warnings
 import os
-
-warnings.filterwarnings("ignore") 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # import libraries and files
 from imblearn.over_sampling import RandomOverSampler
@@ -12,6 +8,7 @@ from src.prep_data.get_df import build_dataframe
 from src.prep_data.preprocess import load_data
 from src.audio_classifier.build_model import create_classifier, train_classifier
 from src.ui.cleanup import final_cleanup
+from src.checks.warning_level import change_logging
 from tf_lite_utils.converter.tflite_converter import convert_for_microcontroller, get_representative_dataset
 from tf_lite_utils.tflite_utils import compare_models
 from ConvertForArduino.get_cpp_version import convert_tflite_to_cpp
@@ -22,8 +19,10 @@ from ConvertForArduino.get_cpp_version import convert_tflite_to_cpp
 # from src.ui.visualization import visualize_stats, plot_confusion_matrix
 # from src.prep_data.evaluate_dataset import plot_dataset
 
+change_logging() # clean up terminal output
 # force gpu usage
 # assert tf.config.list_physical_devices('GPU'), "No GPU available. Exiting."
+
 """
 Main will load and split the dataset, create and train the full model (.keras), convert to tflite (.tflite),
 compare the full and tflite models and then create a cpp file with a header for arduino integration
