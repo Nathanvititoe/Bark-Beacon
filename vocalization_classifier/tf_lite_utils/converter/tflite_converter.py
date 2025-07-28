@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import os
+
 """
 Functions for converting full model files (.keras) to tf lite models (.tflite), and then analyzing the specs of 
 the tflite model to verify if it is compatible with whatever microcontroller you plan to use
@@ -33,32 +34,3 @@ def get_representative_dataset(val_features):
     return rep_data
 
 
-# check model size and specs to see if arduino can run it
-def analyze_tflite_model(tflite_path):
-    # get model file size
-    model_size_kb = os.path.getsize(tflite_path) / 1024
-    print(f"\n TFLite Model Size: {model_size_kb:.2f} KB")
-
-    interpreter = tf.lite.Interpreter(model_path=tflite_path)
-    interpreter.allocate_tensors()
-
-    # input tensor info
-    input_details = interpreter.get_input_details()
-    print("\n Input Tensor(s):")
-    for d in input_details:
-        print(f"  - Name: {d['name']}")
-        print(f"    Shape: {d['shape']}")
-        print(f"    DType: {d['dtype']}")
-        print(f"    Quantization: scale={d['quantization'][0]}, zero_point={d['quantization'][1]}")
-
-    # output tensor info
-    output_details = interpreter.get_output_details()
-    print("\n Output Tensor(s):")
-    for d in output_details:
-        print(f"  - Name: {d['name']}")
-        print(f"    Shape: {d['shape']}")
-        print(f"    DType: {d['dtype']}")
-        print(f"    Quantization: scale={d['quantization'][0]}, zero_point={d['quantization'][1]}")
-
-    # get tensor count
-    print(f"\nTotal tensors in model: {len(interpreter.get_tensor_details())}")

@@ -1,5 +1,5 @@
 from tensorflow.keras import layers, models, regularizers # type: ignore
-from tensorflow.keras.optimizers import AdamW, Adam # type: ignore
+from tensorflow.keras.optimizers import AdamW # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping,ReduceLROnPlateau # type: ignore
 from sklearn.utils import class_weight
 import numpy as np
@@ -15,8 +15,11 @@ def create_classifier(num_classes):
     audio_classifier = models.Sequential([
         # custom classifier head
         layers.Input(shape=(1024,)),  # input yamnet 1024-embedding (feature vector)
-
-        # conv layer
+ 
+        # used 256 for best accuracy
+        # layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(1e-3)), # dense layer, 256 neurons/nodes
+        
+        # dropped to 128 to reduce model size for embedded use (still ~94% accuracy)
         layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(1e-3)), # dense layer, 256 neurons/nodes
         layers.BatchNormalization(), # normalize each batch
         layers.Dropout(0.4), # randomly drop 40% of neurons (prevents overfitting)

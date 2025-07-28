@@ -49,14 +49,13 @@ def convert_tflite_to_cpp(LITE_MODEL_PATH):
     versioned_h_path = os.path.join(version_dir_path, "audio_classifier.h")
 
     # get C array with xxd
-    result = subprocess.run(["xxd", "-i", LITE_MODEL_PATH], capture_output=True, text=True, check=True)
+    arr_var_name = "audio_classifier"
+    result = subprocess.run(["xxd", "-i","-n", arr_var_name, LITE_MODEL_PATH], capture_output=True, text=True, check=True)
     content = result.stdout
     content = content.replace("unsigned char ", "const unsigned char ")
-    content = content.replace("[]", "audio_classifier[]")
-    content = content.replace("_len", "audio_classifier_len")
     content = content.replace("unsigned int ", "const unsigned int ")
     content = f'#include "audio_classifier.h"\n\n{content}\n'
-
+    
     # write cpp file
     with open(versioned_cpp_path, "w") as f:
         f.write(content)
@@ -69,15 +68,14 @@ def convert_tflite_to_cpp(LITE_MODEL_PATH):
         f.write("extern const unsigned int audio_classifier_len;\n\n")
         f.write(f"#endif // {include_guard}\n")
 
-    print(f"Model array written to:\n  - {versioned_cpp_path}\n  - {versioned_h_path}")
-    print(f"Version #: {version}")
+    print(f"\n\nModel array written to:\n  - {versioned_cpp_path}\n  - {versioned_h_path}")
 
     # write latest copies to top level
     latest_cpp = os.path.join(latest_dir_path, "audio_classifier.cpp")
     latest_h = os.path.join(latest_dir_path, "audio_classifier.h")
     shutil.copy(versioned_cpp_path, latest_cpp)
     shutil.copy(versioned_h_path, latest_h)
-    print(f"Latest version copied to:\n  - {latest_cpp}\n  - {latest_h}")
+    print(f"\nLatest version copied to:\n  - {latest_cpp}\n  - {latest_h}\n\n")
 
 if __name__ == "__main__":
     tf_lite_model = os.path.join(MODEL_DIR, "BarkBeacon_Lite.tflite")

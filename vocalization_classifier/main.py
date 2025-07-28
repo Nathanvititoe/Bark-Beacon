@@ -2,7 +2,6 @@ import os
 
 # import libraries and files
 from imblearn.over_sampling import RandomOverSampler
-from tensorflow.keras.models import load_model # type: ignore
 from sklearn.model_selection import train_test_split
 from src.prep_data.get_df import build_dataframe
 from src.prep_data.preprocess import load_data
@@ -11,6 +10,7 @@ from src.ui.cleanup import final_cleanup
 from src.checks.warning_level import change_logging
 from tf_lite_utils.converter.tflite_converter import convert_for_microcontroller, get_representative_dataset
 from tf_lite_utils.tflite_utils import compare_models
+from ConvertForArduino.analyze_tflite import analyze_tflite_model
 from ConvertForArduino.get_cpp_version import convert_tflite_to_cpp
 # data visualizations and comparisons
 # from termcolor import colored
@@ -72,6 +72,9 @@ convert_tflite_to_cpp(LITE_MODEL_PATH) # get cpp files for tflite model
 
 # compare full model v tflite model accuracy
 compare_models(val_features, val_labels, FULL_MODEL_PATH, LITE_MODEL_PATH)
+
+# print tflite model specs for using in Arduino
+analyze_tflite_model(LITE_MODEL_PATH) 
 
 # # plot training results
 # plot_confusion_matrix(audio_classifier, val_features, val_labels, label_names) # create confusion matrix
