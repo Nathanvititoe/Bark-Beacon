@@ -23,8 +23,7 @@ def estimate_tensor_arena(interpreter):
         tensor_size = num_elements * bytes_per_elem
         total_tensor_bytes += tensor_size
     print(f"\nTotal Tensor bytes: {total_tensor_bytes:.2f}\n")
-    estimated_arena = int(total_tensor_bytes * 4 + 4096)
-    return estimated_arena
+    return total_tensor_bytes * 5
 
 
 # check model specs to see if arduino can run it
@@ -37,14 +36,11 @@ def analyze_tflite_model(tflite_path):
 
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
-    estimated_arena_size = estimate_tensor_arena(interpreter)
-    print("\n-----------------------")
-    print(estimated_arena_size)
-    print("-----------------------\n") 
+    estimated_arena_bytes = estimate_tensor_arena(interpreter)
      
     # round up and give 50% buffer
-    recommended_arena_kb = math.ceil(estimated_arena_size / 1024 * 1.5)
-    recommended_arena_bytes = recommended_arena_kb * 1024
+    recommended_arena_bytes = (estimated_arena_bytes ) / 100
+    recommended_arena_kb = math.ceil(recommended_arena_bytes / 1024)
     
     print(f"\n\nModel Size: {model_size_kb:.2f} KB\n")
 
@@ -64,7 +60,7 @@ def analyze_tflite_model(tflite_path):
     
     print(f"\nEstimated Tensor Arena: {recommended_arena_bytes / 1024:.2f} KB")
     print(f"Recommended Arena (+50% buffer): {recommended_arena_kb} KB\n")
-    print(f"Use: `constexpr int tensorArenaSize = {recommended_arena_bytes};` in Arduino code\n")
+    print(f"Use: [{recommended_arena_kb} * 1024] as tensorArenaSize in Arduino code\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze a TFLite model for Arduino deployment")

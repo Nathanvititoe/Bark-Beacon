@@ -20,7 +20,7 @@ def create_classifier(num_classes):
         # layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(1e-3)), # dense layer, 256 neurons/nodes
         
         # dropped to 128 to reduce model size for embedded use (still ~94% accuracy)
-        layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(1e-3)), # dense layer, 256 neurons/nodes
+        layers.Dense(128, activation='relu', kernel_regularizer=regularizers.l2(1e-3)), # dense layer, 256 neurons/nodes
         layers.BatchNormalization(), # normalize each batch
         layers.Dropout(0.4), # randomly drop 40% of neurons (prevents overfitting)
         
