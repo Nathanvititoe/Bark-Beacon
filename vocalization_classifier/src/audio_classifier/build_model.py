@@ -11,16 +11,20 @@ and allowing validation testing by returning the model_history from the training
 
 # create the simple CNN to classify yamnet embeddings
 def create_classifier(num_classes):
+    if num_classes < 1:
+        raise ValueError("num_classes must be at least 1")
+    
     # build classifier w/ input shape same as yamnet output shape
     audio_classifier = models.Sequential([
         # custom classifier head
         layers.Input(shape=(1024,)),  # input yamnet 1024-embedding (feature vector)
  
         # used 256 for best accuracy
-        layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(1e-3)), # dense layer, 256 neurons/nodes
+        # layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(1e-3)), # dense layer, 256 neurons/nodes
         
         # dropped to 128 to reduce model size for embedded use (still ~94% accuracy)
         # layers.Dense(128, activation='relu', kernel_regularizer=regularizers.l2(1e-3)), # dense layer, 256 neurons/nodes
+       
         layers.BatchNormalization(), # normalize each batch
         layers.Dropout(0.4), # randomly drop 40% of neurons (prevents overfitting)
         
