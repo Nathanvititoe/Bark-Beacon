@@ -6,7 +6,7 @@ import scipy.signal
 import os 
 import soundfile as sf
 from tqdm import tqdm
-from src.ui.visualization import plot_spectrograms, plot_waveform_comparison
+from src.ui.visualization import plot_spectrograms, plot_waveform
 
 """
 This file contains various functions for preprocessing individual audio files in the dataset
@@ -52,7 +52,7 @@ def load_data(audio_path, df, sample_rate, duration, df_type):
 
     # plot waveforms for each class (raw and pre-processed)
     # if df_type.lower() == "training":
-        # get_waveform_plots(audio_path, df, sample_rate, duration)
+    #     get_waveform_plots(audio_path, df, sample_rate, duration)
     
     print("\n") # create space before progress bar
     # define tqdm progress bar for ui
@@ -82,18 +82,15 @@ def load_data(audio_path, df, sample_rate, duration, df_type):
             print(f"Skipping {path}: {e}")
 
     # if df_type.lower() == "validation":
-        # create plot w/ a spectrogram for each class
-        # plot_spectrograms(class_spectrograms)
+    #     # create plot w/ a spectrogram for each class
+    #     plot_spectrograms(class_spectrograms)
 
     return np.stack(yam_embeddings), np.array(labels) # return features/labels
 
 # plot class waveforms
 def get_waveform_plots(audio_path, df, sample_rate, duration):
-    num_samples = sample_rate * duration # technical audio length (num samples per sec / seconds)
-
     # init dics to track which classes have waveforms
     class_waveforms_raw = {}
-    class_waveforms_proc = {}
 
     # iterate through df until we have a sample for each class
     for _, row in df.iterrows():
@@ -108,10 +105,6 @@ def get_waveform_plots(audio_path, df, sample_rate, duration):
                 raw_audio, sr = sf.read(file_path) # load file
                 class_waveforms_raw[label] = (raw_audio, sr) # add to dict
 
-                # get pre processed audio
-                processed_audio = load_file(file_path, sample_rate, num_samples).numpy() # load and preprocess
-                class_waveforms_proc[label] = (processed_audio, sample_rate) # add to dict
-
             except Exception as e:
                 print(f"Failed to load from {file_path}: {e}")
 
@@ -119,5 +112,5 @@ def get_waveform_plots(audio_path, df, sample_rate, duration):
         if len(class_waveforms_raw) == df['class'].nunique():
             break
     
-    plot_waveform_comparison(class_waveforms_raw, class_waveforms_proc) # compare raw v processed waveforms
+    plot_waveform(class_waveforms_raw) # plot raw waveforms
    

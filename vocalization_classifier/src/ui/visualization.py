@@ -48,51 +48,35 @@ def visualize_stats(classifier_history):
     plt.show() # display them
 
 # function to plot/compare raw v processed audio waveforms
-# TODO: Raw and processed are pulling two separate samples 
-def plot_waveform_comparison(class_waveforms_raw, class_waveforms_proc):
+def plot_waveform(class_waveforms_raw):
     num_classes = len(class_waveforms_raw) # get number of classes
-    fig, axes = plt.subplots(num_classes, 2, figsize=(15, 2*num_classes), constrained_layout=True) # create subplots
-    fig.suptitle("Raw vs. Processed Audio Waveforms\n\n", fontsize=14) # add title (position and fontsize)
+    fig, axes = plt.subplots(num_classes, 1, figsize=(15, 2*num_classes), constrained_layout=True) # create subplot
+    fig.suptitle("Raw Audio Waveforms\n\n", fontsize=14) # add title (position and fontsize)
     
     # iterate through audio waveform dict (for each class) 
-    for i, label in enumerate(class_waveforms_raw):
+    for i, (label, (raw_waveform, sr)) in enumerate(class_waveforms_raw.items()):
         raw_waveform, sr = class_waveforms_raw[label] # get raw waveform
-        proc_waveform, sr = class_waveforms_proc[label] # get processed waveform
 
         # convert samples to time for human readability (x axis)
         raw_time = np.arange(len(raw_waveform)) / sr 
-        proc_time = np.arange(len(proc_waveform)) / sr
 
         # plot raw audio waveform channels
         if raw_waveform.ndim == 2:  # if stereo audio
-            axes[i, 0].plot(raw_time, raw_waveform[:, 0], label='Left Channel', color='yellow', alpha=0.5) # plot left channel 
-            axes[i, 0].plot(raw_time, raw_waveform[:, 1], label='Right Channel', color='red', alpha=0.5) # plot right channel
-            axes[i, 0].set_xlim(raw_time[0], raw_time[-1]) # trim stereo whitespace
+            axes[i].plot(raw_time, raw_waveform[:, 0], label='Left Channel', color='yellow', alpha=0.5) # plot left channel 
+            axes[i].plot(raw_time, raw_waveform[:, 1], label='Right Channel', color='red', alpha=0.5) # plot right channel
+            axes[i].set_xlim(raw_time[0], raw_time[-1]) # trim stereo whitespace
         else:  # if mono audio
-            axes[i, 0].plot(raw_time, raw_waveform, label='Mono', color='orange') # plot single channel
-            axes[i, 0].set_xlim(raw_time[0], raw_time[-1]) # trim mono whitespace
+            axes[i].plot(raw_time, raw_waveform, label='Mono', color='orange') # plot single channel
+            axes[i].set_xlim(raw_time[0], raw_time[-1]) # trim mono whitespace
         
         # Raw Audio Titles
-        axes[i, 0].set_title(f"{label} - Raw", fontsize=9) # add title for each subplot
-        axes[i, 0].set_ylabel("Amplitude", fontsize=7) # add y label
-
-        # processed audio plot and title
-        axes[i, 1].plot(proc_time, proc_waveform, color='orange') # create plot
-        axes[i, 1].set_title(f"{label} - Processed", fontsize=9) # add title
-        axes[i, 1].set_xlim(proc_time[0], proc_time[-1])  # trim processed whitespace
+        axes[i].set_title(f"{label} - Raw", fontsize=9) # add title for each subplot
+        axes[i].set_ylabel("Amplitude", fontsize=7) # add y label
 
     # add x label
     for ax in axes.flat:
         ax.set_xlabel("Time (sec)", fontsize=7) # add x labels
         ax.tick_params(axis='both', labelsize=6, length=2, pad=2) # set sizing for axis markings
-
-    # create legend to show mono v. stereo
-    legend_lines = [
-    mlines.Line2D([], [], color='yellow', label='Left Channel'),
-    mlines.Line2D([], [], color='red', label='Right Channel'),
-    mlines.Line2D([], [], color='orange', label='Processed Mono')
-    ]
-    fig.legend(handles=legend_lines, loc='upper left', ncol=3, fontsize='medium') # add legend
     
     plt.tight_layout() # adjust layout
     plt.show() # display plots
@@ -111,7 +95,11 @@ def plot_spectrograms(class_spectrograms):
     for i, label in enumerate(labels):
         spec = class_spectrograms[label] # get the spectrogram
         ax = axes[i] # select subplot
-        ax.imshow(spec, aspect='auto', origin='lower', cmap='magma') # show the spectrogram
+
+         # set extent so x-axis represents sample indices
+        extent = [0, spec.shape[1], 0, spec.shape[0]]
+
+        ax.imshow(spec, aspect='auto', origin='lower', cmap='magma', extent=extent) # show the spectrogram
         ax.set_title(f"{label}", fontsize=10) # add title (label)
         # ax.axis('off') # turn off axis labels
 

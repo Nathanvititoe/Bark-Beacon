@@ -11,6 +11,7 @@ from src.ui.visualization import audio_sampler
 leftover from a previous project, and included because it may be useful for future
 work
 """
+VOCALIZATIONS = ["bark", "growl", "whine", "howl"]  
 
 # function to take input from user and display model prediction functionality
 def get_prediction(classifier, sample_rate, duration, class_names, user_predict_df, audio_root_path):
@@ -42,7 +43,7 @@ def get_prediction(classifier, sample_rate, duration, class_names, user_predict_
                 # loop to get file path / prevent exiting
                 while inputting_file_path:
                     # get user filepath as input
-                    filepath = input("Please enter the file path for your .wav file, relative to the CSC370 directory (or 'exit' to cancel): ").strip()
+                    filepath = input("Please enter the file path for your .wav file, relative to the vocalization_classifier directory (or 'exit' to cancel): ").strip()
                     
                     # check if user wants to exit
                     if filepath.lower() == "exit":
@@ -60,12 +61,13 @@ def get_prediction(classifier, sample_rate, duration, class_names, user_predict_
                         inputting_choice = False # exit choice selection loop
 
                 
-            # process unseen test file from user_predict_df
+            # process random test file 
             elif choice == "2":
-                row = user_predict_df.sample(n=1).iloc[0] # get a random sample from user_predict_df
-                filepath = os.path.join(audio_root_path, f"fold{row['fold']}", row['slice_file_name']) # get the full filepath
-                label = f"Unseen Sample: ({row['class']})" # get label to display
-                actual_label = row['class']
+                filepath, actual_label = get_random_sample(audio_root_path)
+                if not filepath:
+                    print("No valid samples found in dataset.")
+                    continue
+                label = f"Random Sample: ({actual_label})"
                 is_custom_file = False # ensure this remains false
                 inputting_choice = False # exit loop
 
@@ -98,7 +100,7 @@ def get_prediction(classifier, sample_rate, duration, class_names, user_predict_
             pred_class = int(np.argmax(pred)) # get the class id
             confidence = pred[0][pred_class] # get confidence level
             pred_label = class_names[pred_class] # get class name
-            if is_custom_file == False:
+            if not is_custom_file:
                 pred_color = "green" if pred_label == actual_label else "red"
                 print(colored(f"\nPrediction : {pred_label}", pred_color)) # output prediction w/ color
             else:
@@ -108,11 +110,11 @@ def get_prediction(classifier, sample_rate, duration, class_names, user_predict_
             # if low confidence, tell user (to handle user files that arent one of the 10 trained classes)
             output_confidence = round((confidence * 100), 1)
             if confidence < 0.7:
-                print(colored(f"Warning: Low confidence prediction: {output_confidence} — this audio may not match any known class.", "light_red"))
+                print(colored(f"Warning: Low confidence prediction: {output_confidence:2f} — this audio may not match any known class.", "light_red"))
             elif confidence < 0.8:
-                print(colored(f"Confidence : {output_confidence}%", "yellow")) 
+                print(colored(f"Confidence : {output_confidence:2f}%", "yellow")) 
             else:
-                print(colored(f"Confidence : {output_confidence}%", "green")) 
+                print(colored(f"Confidence : {output_confidence:2f}%", "green")) 
         except Exception as e:
             print(colored(f"Prediction failed: {e}", "red"))
         
@@ -120,6 +122,19 @@ def get_prediction(classifier, sample_rate, duration, class_names, user_predict_
         response = input("\nWould you like to classify another file? (y/n): ").strip().lower()
         if response.strip().lower() == "n":
             getting_predictions = False
+
+# get random file from dataset
+def get_random_sample(audio_root_path):
+    files = []
+    for label in VOCALIZATIONS:
+        label_dir = os.path.join(audio_root_path, label)
+        if os.path.isdir(label_dir):
+            for f in os.listdir(label_dir):
+                if f.lower().endswith(".wav"):
+                    files.append((os.path.join(label_dir, f), label))
+    if not files:
+        return None, None
+    return files[np.random.randint(len(files))]
 
 # function to convert non-wav files to wav files
 def convert_files_to_wav(input_path, output_path):

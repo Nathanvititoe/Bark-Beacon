@@ -12,6 +12,8 @@ from tf_lite_utils.converter.tflite_converter import convert_for_microcontroller
 from tf_lite_utils.tflite_utils import compare_models
 from ConvertForArduino.analyze_tflite import analyze_tflite_model
 from ConvertForArduino.get_cpp_version import convert_tflite_to_cpp
+from src.ui.visualization import plot_confusion_matrix, visualize_stats
+from src.ui.user_input import get_prediction
 # data visualizations and comparisons
 # from termcolor import colored
 # from src.ui.colors import get_acc_color, get_loss_color
@@ -76,12 +78,12 @@ compare_models(val_features, val_labels, FULL_MODEL_PATH, LITE_MODEL_PATH)
 # print tflite model specs for using in Arduino
 analyze_tflite_model(LITE_MODEL_PATH) 
 
-# # plot training results
+# plot training results
 # plot_confusion_matrix(audio_classifier, val_features, val_labels, label_names) # create confusion matrix
-# visualize_stats(classifier_history) # visualize the loss/acc
+visualize_stats(classifier_history) # visualize the loss/acc
 
 # TODO: fix prediction to test custom files
-# get_prediction(audio_classifier, SAMPLE_RATE, DURATION_SEC, label_names, train_features, AUDIO_ROOT_PATH)
+get_prediction(audio_classifier, SAMPLE_RATE, DURATION_SEC, label_names, train_features, AUDIO_ROOT_PATH)
 
 final_cleanup()
 print("Exiting...")
