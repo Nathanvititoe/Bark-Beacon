@@ -24,6 +24,22 @@ def get_next_version():
             max_version = max(max_version, version)
     return max_version + 1
 
+def create_content(content, arr_var_name) :
+    content = content.replace("unsigned char ", "const unsigned char ")
+    content = content.replace("unsigned int ", "const unsigned int ")
+    pat = rf"(const\s+unsigned\s+char\s+{re.escape(arr_var_name)}\s*\[\]\s*)="
+    prolog = (
+        '#if defined(ARDUINO_ARCH_AVR)\n'
+        '#  include <avr/pgmspace.h>\n'
+        '#  define AUDIO_MODEL_STORAGE PROGMEM\n'
+        '#else\n'
+        '#  define AUDIO_MODEL_STORAGE\n'
+        '#endif\n\n'
+    )
+    repl = r"\1 AUDIO_MODEL_STORAGE alignas(16) ="
+    content = prolog + re.sub(pat, repl, content, count=1)
+    return content
+
 # convert tflite model (.tflite) to cpp file and header
 def convert_tflite_to_cpp(LITE_MODEL_PATH):
     # throw err if lite model cant be found
@@ -51,10 +67,11 @@ def convert_tflite_to_cpp(LITE_MODEL_PATH):
     # get C array with xxd
     arr_var_name = "audio_classifier"
     result = subprocess.run(["xxd", "-i","-n", arr_var_name, LITE_MODEL_PATH], capture_output=True, text=True, check=True)
-    content = result.stdout
-    content = content.replace("unsigned char ", "const unsigned char ")
-    content = content.replace("unsigned int ", "const unsigned int ")
+    content = create_content(result.stdout, arr_var_name)
     content = f'#include "audio_classifier.h"\n\n{content}\n'
+    # content = content.replace("unsigned char ", "const unsigned char ")
+    # content = content.replace("unsigned int ", "const unsigned int ")
+    # content = f'#include "audio_classifier.h"\n\n{content}\n'
     
     # write cpp file
     with open(versioned_cpp_path, "w") as f:

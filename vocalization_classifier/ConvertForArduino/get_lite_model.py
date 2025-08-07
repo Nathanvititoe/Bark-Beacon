@@ -26,7 +26,7 @@ train_data, val_data = train_test_split(df, test_size=0.1, stratify=df['classID'
 val_features, val_labels = load_data(AUDIO_ROOT_PATH, val_data, SAMPLE_RATE, DURATION_SEC, df_type="validation")
 
 # get rep dataset
-rep_dataset = get_representative_dataset(val_features)
-convert_for_microcontroller(FULL_MODEL_PATH, LITE_MODEL_PATH, rep_dataset)
+# rep_dataset = get_representative_dataset(val_features) -- only used for quantized models
+convert_for_microcontroller(FULL_MODEL_PATH, LITE_MODEL_PATH)
 print("Analyzing TFLite Model specs...")
 analyze_tflite_model(LITE_MODEL_PATH)

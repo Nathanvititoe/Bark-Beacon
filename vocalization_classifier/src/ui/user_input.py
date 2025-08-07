@@ -3,15 +3,18 @@ import numpy as np
 from pydub import AudioSegment
 import tensorflow as tf
 from termcolor import colored
+import subprocess
+
 from src.prep_data.preprocess import load_file, get_yamnet_embedding
 from src.ui.visualization import audio_sampler
+
 # TODO: REWORK 
 """
 [IMPORTANT] This has not yet been integrated into the Bark Beacon Audio Classifier, but was 
 leftover from a previous project, and included because it may be useful for future
 work
 """
-VOCALIZATIONS = ["bark", "growl", "whine", "howl"]  
+VOCALIZATIONS = ["bark", "growl", "whine", "howl", "unknown"]  
 
 # function to take input from user and display model prediction functionality
 def get_prediction(classifier, sample_rate, duration, class_names, user_predict_df, audio_root_path):
@@ -39,27 +42,25 @@ def get_prediction(classifier, sample_rate, duration, class_names, user_predict_
             # process user file path
             elif choice == "1":
                 inputting_file_path = True 
-                is_custom_file = True # toggle boolean for coloring
-                # loop to get file path / prevent exiting
+                is_custom_file = True  # toggle boolean for coloring
+
                 while inputting_file_path:
-                    # get user filepath as input
-                    filepath = input("Please enter the file path for your .wav file, relative to the vocalization_classifier directory (or 'exit' to cancel): ").strip()
-                    
-                    # check if user wants to exit
-                    if filepath.lower() == "exit":
+                    # get the audio file from Windows file explorer
+                    filepath = get_user_file_windows()
+
+                    # handle cancel
+                    if not filepath:
                         print("User cancelled.")
-                        inputting_file_path = False # exit file path input loop
-                        inputting_choice = False # exit choice selection loop
-                    
-                    # get the audio file from the user provided path
+                        inputting_file_path = False
+                        inputting_choice = False
+                        break
+
+                    # convert non wav files
                     filepath = get_user_audio_file(filepath)
-
-                    # if its a good file, exit both loops
                     if filepath:
-                        label = "Your File" # label to display
-                        inputting_file_path = False # exit file path input loop
-                        inputting_choice = False # exit choice selection loop
-
+                        label = "Your File"  # label to display
+                        inputting_file_path = False
+                        inputting_choice = False
                 
             # process random test file 
             elif choice == "2":
@@ -100,21 +101,21 @@ def get_prediction(classifier, sample_rate, duration, class_names, user_predict_
             pred_class = int(np.argmax(pred)) # get the class id
             confidence = pred[0][pred_class] # get confidence level
             pred_label = class_names[pred_class] # get class name
+            
+            # if low confidence, tell user (to handle user files that arent one of the 10 trained classes)
+            output_confidence = round((confidence * 100), 1)
+            if confidence < 0.7:
+                pred_label = "unknown"
+                print(colored(f"Warning: Low confidence prediction: {output_confidence:2f} — Defaulting to Unknown to avoid accidental corrections.", "light_red"))
+            elif confidence < 0.8:
+                print(colored(f"Confidence : {output_confidence:2f}%", "yellow")) 
+            else:
+                print(colored(f"Confidence : {output_confidence:2f}%", "green")) 
             if not is_custom_file:
                 pred_color = "green" if pred_label == actual_label else "red"
                 print(colored(f"\nPrediction : {pred_label}", pred_color)) # output prediction w/ color
             else:
                 print(f"\nPrediction : {pred_label}") # output prediction w/o color
-
-            
-            # if low confidence, tell user (to handle user files that arent one of the 10 trained classes)
-            output_confidence = round((confidence * 100), 1)
-            if confidence < 0.7:
-                print(colored(f"Warning: Low confidence prediction: {output_confidence:2f} — this audio may not match any known class.", "light_red"))
-            elif confidence < 0.8:
-                print(colored(f"Confidence : {output_confidence:2f}%", "yellow")) 
-            else:
-                print(colored(f"Confidence : {output_confidence:2f}%", "green")) 
         except Exception as e:
             print(colored(f"Prediction failed: {e}", "red"))
         
@@ -158,10 +159,6 @@ def get_user_audio_file(user_input_path):
     else:
         # output to user that load was successful
         user_file_name = os.path.basename(user_input_path)
-        path_length = len(user_file_name)
-        print("-" * (path_length + 24))
-        print(f"  Loaded Custom file: {colored(user_file_name, 'green')}")
-        print("-" * (path_length + 24))
 
     ext = os.path.splitext(user_input_path)[-1].lower() # verify the file extension
     
@@ -179,3 +176,34 @@ def get_user_audio_file(user_input_path):
 
     converted = convert_files_to_wav(user_input_path, output_path) # convert to a wav file
     return converted
+
+def get_user_file_windows():
+    ps_script = r'''
+    Add-Type -AssemblyName System.Windows.Forms
+    $file = New-Object System.Windows.Forms.OpenFileDialog
+    $file.Filter = "Audio Files (*.wav;*.mp3;*.ogg;*.flac;*.m4a)|*.wav;*.mp3;*.ogg;*.flac;*.m4a|All Files (*.*)|*.*"
+    if ($file.ShowDialog() -eq 'OK') { Write-Output $file.FileName }
+    '''
+    result = subprocess.run(
+        ["powershell.exe", "-Command", ps_script],
+        capture_output=True,
+        text=True
+    )
+
+    filepath = result.stdout.strip()
+    if not filepath:
+        print("No file selected.")
+        return None
+
+    # Convert to WSL path
+    filepath = subprocess.run(["wslpath", filepath], capture_output=True, text=True).stdout.strip()
+
+    if not os.path.isfile(filepath):
+        print(f"Error: File not found at {filepath}")
+        return None
+
+    user_file_name = os.path.basename(filepath)
+    print("-" * (len(user_file_name) + 24))
+    print(f"  Loaded Custom file: {colored(user_file_name, 'green')}")
+    print("-" * (len(user_file_name) + 24))
+    return filepath

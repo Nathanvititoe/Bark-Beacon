@@ -6,7 +6,7 @@ with classes separated into individual directories, inferred from the last part 
 name, following an underscore(_)
 """
 # Define categories you want to group
-target_categories = ["bark", "growl", "grunt", "howl", "whine"]
+target_categories = ["bark", "growl", "grunt", "howl", "whine", "unknown"]
 
 # directories to pull files from
 sources = [

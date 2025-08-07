@@ -21,13 +21,20 @@ def load_lite_model(tflite_path):
 # get inference from lite model
 def lite_inference(val_features, interpreter, input_details, output_details):
     tflite_preds = []
+
+    input_dtype = input_details[0]['dtype']
     input_scale, input_zero_point = input_details[0]['quantization']
 
     for i in range(len(val_features)):
-        # quantize input from float32 to uint8
         float_input = val_features[i]
-        quantized_input = (float_input / input_scale + input_zero_point).astype(np.uint8)
-        input_data = np.expand_dims(quantized_input, axis=0)
+
+        if input_dtype == np.uint8 and input_scale > 0:
+            # if its a quantized model
+            quantized_input = (float_input / input_scale + input_zero_point).astype(np.uint8)
+            input_data = np.expand_dims(quantized_input, axis=0)
+        else:
+            # if its a float model (no quantization)
+            input_data = np.expand_dims(float_input.astype(np.float32), axis=0)
 
         interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()

@@ -65,22 +65,22 @@ train_features, train_labels = ros.fit_resample(train_features, train_labels)
 
 audio_classifier = create_classifier(num_classes)
 classifier_history = train_classifier(audio_classifier, train_features, train_labels, val_features, val_labels, NUM_EPOCHS, BATCH_SIZE)
-rep_dataset = get_representative_dataset(val_features) # get rep_dataset for lite model
+# rep_dataset = get_representative_dataset(val_features) # get rep_dataset for lite model
 
 # save models
 audio_classifier.save(FULL_MODEL_PATH) # save full model to .keras file
-convert_for_microcontroller(FULL_MODEL_PATH, LITE_MODEL_PATH, rep_dataset) # get tflite model
+convert_for_microcontroller(FULL_MODEL_PATH, LITE_MODEL_PATH) # get tflite model
 convert_tflite_to_cpp(LITE_MODEL_PATH) # get cpp files for tflite model
 
 # compare full model v tflite model accuracy
 compare_models(val_features, val_labels, FULL_MODEL_PATH, LITE_MODEL_PATH)
-
+print(val_features.min(), val_features.max()) 
 # print tflite model specs for using in Arduino
 analyze_tflite_model(LITE_MODEL_PATH) 
 
 # plot training results
 # plot_confusion_matrix(audio_classifier, val_features, val_labels, label_names) # create confusion matrix
-visualize_stats(classifier_history) # visualize the loss/acc
+# visualize_stats(classifier_history) # visualize the loss/acc
 
 # TODO: fix prediction to test custom files
 get_prediction(audio_classifier, SAMPLE_RATE, DURATION_SEC, label_names, train_features, AUDIO_ROOT_PATH)
