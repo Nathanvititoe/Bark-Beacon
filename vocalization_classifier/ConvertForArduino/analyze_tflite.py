@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 from ai_edge_litert.interpreter import Interpreter
 import math
+from config import LITE_MODEL_PATH
 
 """
 can be run as a standalone script or a callable function to analyze a saved tf lite model (.tflite) 
@@ -14,8 +15,8 @@ def estimate_tensor_arena(interpreter):
     tensor_details = interpreter.get_tensor_details()
     total_tensor_bytes = 0
     for t in tensor_details:
-        shape = t['shape']
-        dtype = t['dtype']
+        shape = t["shape"]
+        dtype = t["dtype"]
         if shape is None or len(shape) == 0:
             continue
         num_elements = np.prod(shape)
@@ -27,43 +28,50 @@ def estimate_tensor_arena(interpreter):
 
 
 # check model specs to see if arduino can run it
-# outputs model size, input tensor details, output tensor details, and estimated/recommended tensor arena size 
-def analyze_tflite_model(tflite_path):
-    model_size_kb = os.path.getsize(tflite_path) / 1024
+# outputs model size, input tensor details, output tensor details, and estimated/recommended tensor arena size
+def analyze_tflite_model():
+    model_size_kb = os.path.getsize(LITE_MODEL_PATH) / 1024
 
-    interpreter = Interpreter(model_path=tflite_path)
+    interpreter = Interpreter(model_path=LITE_MODEL_PATH)
     interpreter.allocate_tensors()
 
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
     estimated_arena_bytes = estimate_tensor_arena(interpreter)
-     
+
     # round up and give 50% buffer
-    recommended_arena_bytes = (estimated_arena_bytes ) / 100
+    recommended_arena_bytes = (estimated_arena_bytes) / 100
     recommended_arena_kb = math.ceil(recommended_arena_bytes / 1024)
-    
+
     print(f"\n\nModel Size: {model_size_kb:.2f} KB\n")
 
     print("Input Tensor:")
     for d in input_details:
-        input_len = np.prod(d['shape'])
+        input_len = np.prod(d["shape"])
         print(f"  Shape: {d['shape']}")
         print(f"  Type: {d['dtype']}")
         print(f"  Input Length (flattened): {input_len}")
-        print(f"  Quantization: scale={d['quantization'][0]}, zero_point={d['quantization'][1]}")
+        print(
+            f"  Quantization: scale={d['quantization'][0]}, zero_point={d['quantization'][1]}"
+        )
 
     print("\nOutput Tensor:")
     for d in output_details:
         print(f"  Shape: {d['shape']}")
         print(f"  Type: {d['dtype']}")
-        print(f"  Quantization: scale={d['quantization'][0]}, zero_point={d['quantization'][1]}")
-    
+        print(
+            f"  Quantization: scale={d['quantization'][0]}, zero_point={d['quantization'][1]}"
+        )
+
     print(f"\nEstimated Tensor Arena: {recommended_arena_bytes / 1024:.2f} KB")
     print(f"Recommended Arena (+50% buffer): {recommended_arena_kb} KB\n")
     print(f"Use: [{recommended_arena_kb} * 1024] as tensorArenaSize in Arduino code\n")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Analyze a TFLite model for Arduino deployment")
+    parser = argparse.ArgumentParser(
+        description="Analyze a TFLite model for Arduino deployment"
+    )
     parser.add_argument("model_path", type=str, help="Path to the .tflite model file")
     args = parser.parse_args()
 
