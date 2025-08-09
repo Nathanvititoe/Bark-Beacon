@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from src.prep_data.evaluate_dataset import plot_dataset
+# from src.prep_data.evaluate_dataset import plot_dataset
 from config import AUDIO_ROOT_PATH, SHOW_VISUALS
 
 """
@@ -33,7 +33,7 @@ def build_dataframe():
                 )
 
     df = pd.DataFrame(rows)
-    if SHOW_VISUALS:
-        plot_dataset(df)
+    # if SHOW_VISUALS:
+    #     plot_dataset(df)
 
     return df

@@ -8,7 +8,7 @@ if str(ROOT) not in sys.path:
 
 # import libraries and files
 from src.prep_data.get_df import build_dataframe
-from src.audio_classifier.build_model import create_and_train
+from vocalization_classifier.src.audio_classifier.build_model import create_and_train
 from src.ui.cleanup import final_cleanup
 from src.checks.warning_level import change_logging
 from tf_lite_utils.tflite_utils import compare_models
@@ -20,13 +20,6 @@ change_logging()  # clean up terminal output
 Main will load and split the dataset, create and train the full model (.keras), convert to tflite (.tflite),
 compare the full and tflite models and then create a cpp file with a header for arduino integration
 """
-
-# REFACTOR
-# boolean to toggle visuals
-# modularized the dataset split and preprocess
-# created config.py and integrated global config and directories throughout repo
-# moved classifier logic all within build_model
-
 
 # get dataframe from dataset
 df = build_dataframe()

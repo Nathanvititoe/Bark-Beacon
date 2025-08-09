@@ -5,3 +5,4 @@ pycache
 .gitignore
 models/*
 !models/.gitkeep
+old_yam_build/*

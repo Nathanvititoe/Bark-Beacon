@@ -1,7 +1,6 @@
 from sklearn.model_selection import train_test_split
-from src.prep_data.preprocess import load_data
-from imblearn.over_sampling import RandomOverSampler
-from config import AUDIO_ROOT_PATH, VALID_SPLIT, SAMPLE_RATE, DURATION_SEC
+from vocalization_classifier.src.prep_data.preprocess import load_data
+from config import VALID_SPLIT
 
 """
 This will split the dataset into training and validation sets, and run each df through its own preprocessing,
@@ -20,9 +19,5 @@ def get_train_val_split(df):
 
     # preprocess/load the validation data
     val_features, val_labels = load_data(val_data, df_type="validation")
-
-    # oversample to help with class imbalance
-    ros = RandomOverSampler(random_state=42)
-    train_features, train_labels = ros.fit_resample(train_features, train_labels)
 
     return train_features, train_labels, val_features, val_labels

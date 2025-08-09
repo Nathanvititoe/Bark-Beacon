@@ -12,8 +12,12 @@ After retrieving the data I collected, place it in the `datasets/` folder, the d
 
 The `/combined` directory is a collection of all the data I collected separated into the 4 distinct classes - bark, growl, whine and howl. That is what I used to train the model.  
 
----
+## Tensorflow
+To set up Tensorflow on 50 series GPU's follow this guide to run it all in Docker
+[Tensorflow 50 series Guide](https://blog.mypapit.net/2025/06/how-to-get-tensorflow-acceleration-with-nvidia-rtx-50-series-gpu-with-docker-rtx5060ti-16gb-for-ubuntu-and-windows-wsl2.html)
 
+---
+### THIS IS OUT OF DATE FOR THE CURRENT FILE STRUCTURE
 ## Assets
 
 - **Images**:  

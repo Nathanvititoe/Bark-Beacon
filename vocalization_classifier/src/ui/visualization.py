@@ -1,201 +1,201 @@
-import matplotlib.pyplot as plt
-import numpy as np
-from sklearn.metrics import ConfusionMatrixDisplay
-from IPython.display import Audio, display, Markdown
-from config import CLASS_NAMES, SAMPLE_RATE, DURATION_SEC
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from sklearn.metrics import ConfusionMatrixDisplay
+# from IPython.display import Audio, display, Markdown
+# from config import CLASS_NAMES, SAMPLE_RATE, DURATION_SEC
 
-plt.style.use("dark_background")
+# plt.style.use("dark_background")
 
-"""
-Various functions for creating data visualization using Matplotlib
-"""
-# get jupyter to display plots in-line
-try:
-    get_ipython()  # type: ignore
-except NameError:
-    import matplotlib
+# """
+# Various functions for creating data visualization using Matplotlib
+# """
+# # get jupyter to display plots in-line
+# try:
+#     get_ipython()  # type: ignore
+# except NameError:
+#     import matplotlib
 
-    matplotlib.use("TkAgg")
-
-
-# visualize loss v acc during training and validation
-def visualize_stats(classifier_history):
-    # get metrics
-    train_loss = classifier_history.history.get("loss", [])
-    val_loss = classifier_history.history.get("val_loss", [])
-    train_acc = classifier_history.history.get("accuracy", [])
-    val_acc = classifier_history.history.get("val_accuracy", [])
-
-    epochs = range(1, len(train_loss) + 1)
-    plt.figure(figsize=(15, 5))  # set plot size
-
-    # Plot the training vs. validation Accuracy
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs, train_acc, label="Training Accuracy")  # Training acc plot
-    plt.plot(epochs, val_acc, label="Validation Accuracy")  # Validation acc plot
-    plt.title("Training vs Validation Accuracy")  # Title
-    plt.xlabel("Epoch")  # x label
-    plt.ylabel("Accuracy")  # y label
-    plt.legend()  # legend
-
-    # plot training v. validation Loss
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs, train_loss, label="Training Loss")  # training loss plot
-    plt.plot(epochs, val_loss, label="Validation Loss")  # validation loss plot
-    plt.title("Training vs Validation Loss")  # title
-    plt.xlabel("Epoch")  # x label
-    plt.ylabel("Loss")  # y label
-    plt.legend()  # legend
-
-    plt.tight_layout()  # adjust spacing between the plots
-    plt.show()  # display them
+#     matplotlib.use("TkAgg")
 
 
-# function to plot/compare raw v processed audio waveforms
-def plot_waveform(class_waveforms_raw):
-    num_classes = len(class_waveforms_raw)  # get number of classes
-    fig, axes = plt.subplots(
-        num_classes, 1, figsize=(15, 2 * num_classes), constrained_layout=True
-    )  # create subplot
-    fig.suptitle(
-        "Raw Audio Waveforms\n\n", fontsize=14
-    )  # add title (position and fontsize)
+# # visualize loss v acc during training and validation
+# def visualize_stats(classifier_history):
+#     # get metrics
+#     train_loss = classifier_history.history.get("loss", [])
+#     val_loss = classifier_history.history.get("val_loss", [])
+#     train_acc = classifier_history.history.get("accuracy", [])
+#     val_acc = classifier_history.history.get("val_accuracy", [])
 
-    # iterate through audio waveform dict (for each class)
-    for i, (label, (raw_waveform, sr)) in enumerate(class_waveforms_raw.items()):
-        raw_waveform, sr = class_waveforms_raw[label]  # get raw waveform
+#     epochs = range(1, len(train_loss) + 1)
+#     plt.figure(figsize=(15, 5))  # set plot size
 
-        # convert samples to time for human readability (x axis)
-        raw_time = np.arange(len(raw_waveform)) / sr
+#     # Plot the training vs. validation Accuracy
+#     plt.subplot(1, 2, 1)
+#     plt.plot(epochs, train_acc, label="Training Accuracy")  # Training acc plot
+#     plt.plot(epochs, val_acc, label="Validation Accuracy")  # Validation acc plot
+#     plt.title("Training vs Validation Accuracy")  # Title
+#     plt.xlabel("Epoch")  # x label
+#     plt.ylabel("Accuracy")  # y label
+#     plt.legend()  # legend
 
-        # plot raw audio waveform channels
-        if raw_waveform.ndim == 2:  # if stereo audio
-            axes[i].plot(
-                raw_time,
-                raw_waveform[:, 0],
-                label="Left Channel",
-                color="yellow",
-                alpha=0.5,
-            )  # plot left channel
-            axes[i].plot(
-                raw_time,
-                raw_waveform[:, 1],
-                label="Right Channel",
-                color="red",
-                alpha=0.5,
-            )  # plot right channel
-            axes[i].set_xlim(raw_time[0], raw_time[-1])  # trim stereo whitespace
-        else:  # if mono audio
-            axes[i].plot(
-                raw_time, raw_waveform, label="Mono", color="orange"
-            )  # plot single channel
-            axes[i].set_xlim(raw_time[0], raw_time[-1])  # trim mono whitespace
+#     # plot training v. validation Loss
+#     plt.subplot(1, 2, 2)
+#     plt.plot(epochs, train_loss, label="Training Loss")  # training loss plot
+#     plt.plot(epochs, val_loss, label="Validation Loss")  # validation loss plot
+#     plt.title("Training vs Validation Loss")  # title
+#     plt.xlabel("Epoch")  # x label
+#     plt.ylabel("Loss")  # y label
+#     plt.legend()  # legend
 
-        # Raw Audio Titles
-        axes[i].set_title(f"{label} - Raw", fontsize=9)  # add title for each subplot
-        axes[i].set_ylabel("Amplitude", fontsize=7)  # add y label
-
-    # add x label
-    for ax in axes.flat:
-        ax.set_xlabel("Time (sec)", fontsize=7)  # add x labels
-        ax.tick_params(
-            axis="both", labelsize=6, length=2, pad=2
-        )  # set sizing for axis markings
-
-    plt.tight_layout()  # adjust layout
-    plt.show()  # display plots
+#     plt.tight_layout()  # adjust spacing between the plots
+#     plt.show()  # display them
 
 
-# display one spectrogram per class
-def plot_spectrograms(class_spectrograms):
-    labels = sorted(class_spectrograms.keys())  # get class labels
-    num_classes = len(labels)  # get total number of classes
-    num_cols = 2  # number of columns
-    num_rows = int(np.ceil(num_classes / num_cols))  # number of rows
+# # function to plot/compare raw v processed audio waveforms
+# def plot_waveform(class_waveforms_raw):
+#     num_classes = len(class_waveforms_raw)  # get number of classes
+#     fig, axes = plt.subplots(
+#         num_classes, 1, figsize=(15, 2 * num_classes), constrained_layout=True
+#     )  # create subplot
+#     fig.suptitle(
+#         "Raw Audio Waveforms\n\n", fontsize=14
+#     )  # add title (position and fontsize)
 
-    fig, axes = plt.subplots(
-        num_rows, num_cols, figsize=(15, num_classes), squeeze=True
-    )  # create subplots for each class
-    axes = axes.flatten()  # allow for easy iteration over axes
+#     # iterate through audio waveform dict (for each class)
+#     for i, (label, (raw_waveform, sr)) in enumerate(class_waveforms_raw.items()):
+#         raw_waveform, sr = class_waveforms_raw[label]  # get raw waveform
 
-    # iterate through class_spectrograms
-    for i, label in enumerate(labels):
-        spec = class_spectrograms[label]  # get the spectrogram
-        ax = axes[i]  # select subplot
+#         # convert samples to time for human readability (x axis)
+#         raw_time = np.arange(len(raw_waveform)) / sr
 
-        # set extent so x-axis represents sample indices
-        extent = [0, spec.shape[1], 0, spec.shape[0]]
+#         # plot raw audio waveform channels
+#         if raw_waveform.ndim == 2:  # if stereo audio
+#             axes[i].plot(
+#                 raw_time,
+#                 raw_waveform[:, 0],
+#                 label="Left Channel",
+#                 color="yellow",
+#                 alpha=0.5,
+#             )  # plot left channel
+#             axes[i].plot(
+#                 raw_time,
+#                 raw_waveform[:, 1],
+#                 label="Right Channel",
+#                 color="red",
+#                 alpha=0.5,
+#             )  # plot right channel
+#             axes[i].set_xlim(raw_time[0], raw_time[-1])  # trim stereo whitespace
+#         else:  # if mono audio
+#             axes[i].plot(
+#                 raw_time, raw_waveform, label="Mono", color="orange"
+#             )  # plot single channel
+#             axes[i].set_xlim(raw_time[0], raw_time[-1])  # trim mono whitespace
 
-        ax.imshow(
-            spec, aspect="auto", origin="lower", cmap="magma", extent=extent
-        )  # show the spectrogram
-        ax.set_title(f"{label}", fontsize=10)  # add title (label)
-        # ax.axis('off') # turn off axis labels
+#         # Raw Audio Titles
+#         axes[i].set_title(f"{label} - Raw", fontsize=9)  # add title for each subplot
+#         axes[i].set_ylabel("Amplitude", fontsize=7)  # add y label
 
-        # remove axis ticks manually
-        ax.set_xticks([])
-        ax.set_yticks([])
+#     # add x label
+#     for ax in axes.flat:
+#         ax.set_xlabel("Time (sec)", fontsize=7)  # add x labels
+#         ax.tick_params(
+#             axis="both", labelsize=6, length=2, pad=2
+#         )  # set sizing for axis markings
 
-        # add border to each spectrogram
-        for spine in ax.spines.values():
-            spine.set_visible(True)  # ensure border is visible
-            spine.set_edgecolor("white")  # border color
-            spine.set_linewidth(1)  # border thickness
-
-    # disable unused subplots
-    for j in range(i + 1, len(axes)):
-        axes[j].axis("off")
-
-    fig.suptitle("Dog Vocalization Spectrograms\n", fontsize=14)  # add title
-    plt.tight_layout()  # adjust layout
-    plt.show()  # display plot
-
-
-# function to display an audio sample to the user
-def audio_sampler(filepath, label):
-    from src.prep_data.preprocess import load_file  # import here to avoid cyclic error
-
-    try:
-        audio = load_file(filepath).numpy()  # load sample file
-
-        display(Markdown(f"**{label}**"))  # add title
-        display(Audio(audio, rate=SAMPLE_RATE))  # show audio sample
-
-    except Exception as e:
-        print(f"Could not load {filepath}:\n→ {e}")
+#     plt.tight_layout()  # adjust layout
+#     plt.show()  # display plots
 
 
-# function to display confusion matrix and monitor what the model is struggling with
-def plot_confusion_matrix(audio_classifier, val_features, val_labels):
-    print("Loading Features for Confusion Matrix...")
-    y_pred = audio_classifier.predict(
-        val_features
-    )  # get prediction on validation features
-    y_pred_labels = np.argmax(y_pred, axis=1)  # get prediction labels
+# # display one spectrogram per class
+# def plot_spectrograms(class_spectrograms):
+#     labels = sorted(class_spectrograms.keys())  # get class labels
+#     num_classes = len(labels)  # get total number of classes
+#     num_cols = 2  # number of columns
+#     num_rows = int(np.ceil(num_classes / num_cols))  # number of rows
 
-    fig, ax = plt.subplots(
-        figsize=(6, 4), squeeze=True
-    )  # adjust size to fit everything
+#     fig, axes = plt.subplots(
+#         num_rows, num_cols, figsize=(15, num_classes), squeeze=True
+#     )  # create subplots for each class
+#     axes = axes.flatten()  # allow for easy iteration over axes
 
-    # create scikit confusion matrix
-    disp = ConfusionMatrixDisplay.from_predictions(
-        val_labels,  # validation labels
-        y_pred_labels,  # prediction labels
-        display_labels=CLASS_NAMES,  # names of labels
-        cmap="plasma",  # color scheme
-        ax=ax,  # use plt subplot for display
-        colorbar=False,  # turn off built in colorbar scale
-    )
+#     # iterate through class_spectrograms
+#     for i, label in enumerate(labels):
+#         spec = class_spectrograms[label]  # get the spectrogram
+#         ax = axes[i]  # select subplot
 
-    disp.ax_.set_title("Confusion Matrix", fontsize=14)  # add title/subtitle
+#         # set extent so x-axis represents sample indices
+#         extent = [0, spec.shape[1], 0, spec.shape[0]]
 
-    img = disp.im_  # get matrix image
-    fig.colorbar(
-        img, ax=ax, fraction=0.046, pad=0.04
-    )  # add colorbar scale manually to match matrix height
+#         ax.imshow(
+#             spec, aspect="auto", origin="lower", cmap="magma", extent=extent
+#         )  # show the spectrogram
+#         ax.set_title(f"{label}", fontsize=10)  # add title (label)
+#         # ax.axis('off') # turn off axis labels
 
-    # rotate x axis labels for readability
-    disp.ax_.set_xticklabels(disp.ax_.get_xticklabels(), rotation=45, ha="right")
+#         # remove axis ticks manually
+#         ax.set_xticks([])
+#         ax.set_yticks([])
 
-    plt.tight_layout()  # adjust layout
-    plt.show()  # display plot
+#         # add border to each spectrogram
+#         for spine in ax.spines.values():
+#             spine.set_visible(True)  # ensure border is visible
+#             spine.set_edgecolor("white")  # border color
+#             spine.set_linewidth(1)  # border thickness
+
+#     # disable unused subplots
+#     for j in range(i + 1, len(axes)):
+#         axes[j].axis("off")
+
+#     fig.suptitle("Dog Vocalization Spectrograms\n", fontsize=14)  # add title
+#     plt.tight_layout()  # adjust layout
+#     plt.show()  # display plot
+
+
+# # function to display an audio sample to the user
+# def audio_sampler(filepath, label):
+#     from src.prep_data.preprocess import load_file  # import here to avoid cyclic error
+
+#     try:
+#         audio = load_file(filepath).numpy()  # load sample file
+
+#         display(Markdown(f"**{label}**"))  # add title
+#         display(Audio(audio, rate=SAMPLE_RATE))  # show audio sample
+
+#     except Exception as e:
+#         print(f"Could not load {filepath}:\n→ {e}")
+
+
+# # function to display confusion matrix and monitor what the model is struggling with
+# def plot_confusion_matrix(audio_classifier, val_features, val_labels):
+#     print("Loading Features for Confusion Matrix...")
+#     y_pred = audio_classifier.predict(
+#         val_features
+#     )  # get prediction on validation features
+#     y_pred_labels = np.argmax(y_pred, axis=1)  # get prediction labels
+
+#     fig, ax = plt.subplots(
+#         figsize=(6, 4), squeeze=True
+#     )  # adjust size to fit everything
+
+#     # create scikit confusion matrix
+#     disp = ConfusionMatrixDisplay.from_predictions(
+#         val_labels,  # validation labels
+#         y_pred_labels,  # prediction labels
+#         display_labels=CLASS_NAMES,  # names of labels
+#         cmap="plasma",  # color scheme
+#         ax=ax,  # use plt subplot for display
+#         colorbar=False,  # turn off built in colorbar scale
+#     )
+
+#     disp.ax_.set_title("Confusion Matrix", fontsize=14)  # add title/subtitle
+
+#     img = disp.im_  # get matrix image
+#     fig.colorbar(
+#         img, ax=ax, fraction=0.046, pad=0.04
+#     )  # add colorbar scale manually to match matrix height
+
+#     # rotate x axis labels for readability
+#     disp.ax_.set_xticklabels(disp.ax_.get_xticklabels(), rotation=45, ha="right")
+
+#     plt.tight_layout()  # adjust layout
+#     plt.show()  # display plot

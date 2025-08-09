@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 from tensorflow.keras.models import Model  # type: ignore
 from tensorflow.keras.callbacks import History  # type: ignore
-from src.audio_classifier.build_model import create_classifier, train_classifier
+from old_yam_build.build_model import create_classifier, train_classifier
 
 
 @pytest.fixture

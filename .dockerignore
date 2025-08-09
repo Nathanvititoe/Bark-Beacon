@@ -1,0 +1,11 @@
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.build/
+dist/
+models/*.tflite
+**/.ipynb_checkpoints
+.env
+.DS_Store

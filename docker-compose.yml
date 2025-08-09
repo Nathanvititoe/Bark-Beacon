@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    gpus: all
+    ipc: host
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    working_dir: /workspace
+    environment:
+      MPLBACKEND: "Agg"
+      TF_CPP_MIN_LOG_LEVEL: "1"
+      # Optional: change what runs without touching the image
+      # APP_CMD: "python vocalization_classifier/main.py --epochs 50"
+    volumes:
+      - ./:/workspace:rw
+      - ~/.cache/pip:/root/.cache/pip
+    restart: "no" # dont restart without manual command
+    # command: ["bash","-lc","$APP_CMD"]

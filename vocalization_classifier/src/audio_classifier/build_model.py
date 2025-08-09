@@ -6,159 +6,139 @@ import numpy as np
 from pathlib import Path
 from src.ui.cleanup import MemoryCleanupCallback
 from ConvertForArduino.analyze_tflite import analyze_tflite_model
-from ConvertForArduino.get_cpp_version import (
-    convert_tflite_to_cpp,
-)
-from tf_lite_utils.converter.tflite_converter import (
-    convert_for_microcontroller,
-)
+from ConvertForArduino.get_cpp_version import convert_tflite_to_cpp
+from tf_lite_utils.converter.tflite_converter import convert_for_microcontroller
 from config import (
     NUM_CLASSES,
     NUM_EPOCHS,
     BATCH_SIZE,
     FULL_MODEL_PATH,
-    SHOW_VISUALS,
-    USER_PREDICT,
+    # SHOW_VISUALS,
+    # USER_PREDICT,
 )
-from src.ui.user_input import get_prediction
-from src.ui.visualization import (
-    plot_confusion_matrix,
-    visualize_stats,
-)
+# from src.ui.user_input import get_prediction
+# from src.ui.visualization import plot_confusion_matrix, visualize_stats
 
 """
-This file has callable functions for creating the audio classification model, as well as training it,
-and allowing validation testing by returning the model_history from the training function
+Test conversion for YAMNet removal
+Updated for spectrogram-image inputs (H, W, 1). No YAMNet dependency.
 """
 
 
-# create the simple CNN to classify yamnet embeddings
-def create_classifier():
+# ---- CHANGED: 2D CNN that accepts spectrogram images ----
+def create_classifier(input_shape):
     if NUM_CLASSES < 1:
         raise ValueError("num_classes must be at least 1")
+    if len(input_shape) != 3:
+        raise ValueError(f"Expected image input (H,W,1), got {input_shape}")
 
-    # build classifier w/ input shape same as yamnet output shape
-    audio_classifier = models.Sequential(
+    m = models.Sequential(
         [
-            # custom classifier head
-            layers.Input(shape=(1024,)),  # input yamnet 1024-embedding (feature vector)
-            # used 256 for best accuracy
+            layers.Input(shape=input_shape),  # e.g., (64, 256, 1)
+            layers.Conv2D(32, 3, padding="same", activation="relu"),
+            layers.BatchNormalization(),
+            layers.MaxPool2D(2),
+            layers.Conv2D(64, 3, padding="same", activation="relu"),
+            layers.BatchNormalization(),
+            layers.MaxPool2D(2),
+            layers.Conv2D(128, 3, padding="same", activation="relu"),
+            layers.BatchNormalization(),
+            layers.GlobalAveragePooling2D(),
+            layers.Dropout(0.4),
             layers.Dense(
-                256,
-                activation="relu",
-                kernel_regularizer=regularizers.l2(
-                    1e-3
-                ),  # dense layer, 256 neurons/nodes
+                NUM_CLASSES,
+                activation="softmax",
+                kernel_regularizer=regularizers.l2(1e-4),
             ),
-            # dropped to 128 to reduce model size for embedded use (still ~94% accuracy)
-            # layers.Dense(128, activation='relu', kernel_regularizer=regularizers.l2(1e-3)), # dense layer, 256 neurons/nodes
-            layers.BatchNormalization(),  # normalize each batch
-            layers.Dropout(0.4),  # randomly drop 40% of neurons (prevents overfitting)
-            # output layer
-            layers.Dense(
-                NUM_CLASSES, activation="softmax"
-            ),  # dense output layer w/ softmax for categorical cross
         ]
     )
 
-    # compile the model
-    audio_classifier.compile(
-        optimizer=AdamW(
-            learning_rate=9e-4, weight_decay=7e-2  # use adamW for optimization
-        ),
-        loss="sparse_categorical_crossentropy",  # categorical crossentropy for multi-classification
-        metrics=["accuracy"],  # measure accuracy
+    m.compile(
+        optimizer=AdamW(learning_rate=9e-4, weight_decay=7e-2),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
     )
+    return m
 
-    return audio_classifier
 
-
-# function to train and validate the classifier
 def train_classifier(
     audio_classifier, train_features, train_labels, val_features, val_labels
 ):
-    print("\n")  # start training w new line
+    print("\n")
 
-    # define callbacks to refine training
     early_stopping = EarlyStopping(
-        monitor="val_loss",  # what to monitor
-        patience=10,  # wait this many epochs without improvement
-        min_delta=1e-8,  # min gain to achieve w/o stopping
-        restore_best_weights=True,  # use best epoch after stopping
-        verbose=1,  # output logs
+        monitor="val_loss",
+        patience=10,
+        min_delta=1e-8,
+        restore_best_weights=True,
+        verbose=1,
     )
 
     reduce_lr = ReduceLROnPlateau(
-        monitor="val_loss",  # what metric to monitor
-        factor=0.5,  # reduce LR by this factor
-        patience=3,  # wait this many epochs
-        min_lr=1e-6,  # stop reducing at this LR
-        mode="min",  # try to achieve lower loss
-        verbose=1,  # turn on logs
-        lower_is_better=True,  # try to achieve lowest val_loss
+        monitor="val_loss",
+        factor=0.5,
+        patience=3,
+        min_lr=1e-6,
+        mode="min",
+        verbose=1,
+        lower_is_better=True,
     )
-    # add custom callbacks
+
     epoch_cleanup = MemoryCleanupCallback()
 
-    # get class weights to balance out the extensive bark samples
     weights = class_weight.compute_class_weight(
-        class_weight="balanced", classes=np.unique(train_labels), y=train_labels
+        class_weight="balanced",
+        classes=np.unique(train_labels),
+        y=train_labels,
     )
     class_weights = dict(enumerate(weights))
-    # train the model
-    classifier_history = audio_classifier.fit(
-        train_features,  # data to train on
-        train_labels,  # labels
-        validation_data=(val_features, val_labels),  # what to validate with
-        epochs=NUM_EPOCHS,  # how many epochs to train
-        batch_size=BATCH_SIZE,  # size of batches
-        callbacks=[  # define callbacks (called every epoch)
-            epoch_cleanup,  # custom cleanup for resource optimization
-            early_stopping,  # stops when training becomes stagnant
-            reduce_lr,  # reduces learning rate as training slows
-        ],
-        verbose=2,  # turn on training logs
+
+    history = audio_classifier.fit(
+        train_features,
+        train_labels,
+        validation_data=(val_features, val_labels),
+        epochs=NUM_EPOCHS,
+        batch_size=BATCH_SIZE,
+        callbacks=[epoch_cleanup, early_stopping, reduce_lr],
+        verbose=2,
         class_weight=class_weights,
     )
-
-    return classifier_history
+    return history
 
 
 """
-unified function to build and train the full classifier and then save the full model,
-convert to tflite model and then finally convert to a C array for Arduino
-returns the full model history
+Unified: build, train, save .keras, convert to TFLite and C array.
 """
 
 
 def create_and_train(train_features, train_labels, val_features, val_labels):
-    audio_classifier = create_classifier()
-    classifier_history = train_classifier(
+    # ---- CHANGED: infer image input shape from features ----
+    input_shape = tuple(train_features.shape[1:])  # e.g., (64, 256, 1)
+    audio_classifier = create_classifier(input_shape=input_shape)
+
+    history = train_classifier(
         audio_classifier,
         train_features,
         train_labels,
         val_features,
         val_labels,
     )
+
     # save models
     Path(FULL_MODEL_PATH).parent.mkdir(parents=True, exist_ok=True)
-    audio_classifier.save(FULL_MODEL_PATH)  # save full model to .keras file
-    convert_for_microcontroller()  # get tflite model
-    convert_tflite_to_cpp()  # get cpp files for tflite model
+    audio_classifier.save(FULL_MODEL_PATH)
 
-    # plot training results
-    if SHOW_VISUALS:
-        plot_confusion_matrix(
-            audio_classifier,
-            val_features,
-            val_labels,  # create confusion matrix
-        )
-        visualize_stats(classifier_history)  # visualize the loss/acc
+    # export flows unchanged
+    convert_for_microcontroller()
+    convert_tflite_to_cpp()
 
-    # print tflite model specs for using in Arduino
+    # if SHOW_VISUALS:
+    #     plot_confusion_matrix(audio_classifier, val_features, val_labels)
+    #     visualize_stats(history)
+
     analyze_tflite_model()
 
-    if USER_PREDICT:
-        # prompt user to input files for model prediction
-        get_prediction(audio_classifier, train_features)
-    return classifier_history
+    # if USER_PREDICT:
+        # get_prediction(audio_classifier, train_features)
+
+    return history

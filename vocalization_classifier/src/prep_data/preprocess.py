@@ -1,137 +1,186 @@
 # external libraries
-import numpy as np
-import tensorflow as tf
-import tensorflow_hub as hub
-import scipy.signal
 import os
+import numpy as np
+import scipy.signal
 import soundfile as sf
 from tqdm import tqdm
-from src.ui.visualization import plot_spectrograms, plot_waveform
+import librosa  # <-- new: for mel / log-mel
+
+"""
+Test file to see if we can achieve similar accuracy without using YAMNet, but still 
+converting audio samples to spectrograms and then running CNN image classification on them
+"""
+# from src.ui.visualization import plot_spectrograms, plot_waveform
 from config import SAMPLE_RATE, DURATION_SEC, AUDIO_ROOT_PATH, SHOW_VISUALS
 
 """
-This file contains various functions for preprocessing individual audio files in the dataset
+Audio -> log-mel spectrogram images (H, W, 1) for image classification (no YAMNet).
 """
 
-# load YamNet as pretrained model
-yamnet_model = hub.load("https://tfhub.dev/google/yamnet/1")
-yamnet_model.trainable = False  # freeze the model (prevent training)
+# --------- spectrogram params ----------
+N_MELS = 64
+N_FFT = 1024
+HOP_LENGTH = 256
+
+# fixed time width (frames) after pad/crop so the CNN sees a static size
+TARGET_W = 256
+TARGET_H = N_MELS  # by definition
+
+# ------------------------ I/O helpers ------------------------
 
 
-def load_file(filepath):
-    audio_length = SAMPLE_RATE * DURATION_SEC
-    audio, sr = sf.read(filepath)  # load audio files using soundfile
+def load_file(filepath: str) -> np.ndarray:
+    """Load audio, mono, resample to SAMPLE_RATE, pad/trim to DURATION_SEC, return float32 np.array."""
+    target_len = SAMPLE_RATE * DURATION_SEC
+    audio, sr = sf.read(filepath, always_2d=False) # read audio sample file
 
-    # ensure all files are monophonic
-    if len(audio.shape) > 1:
-        audio = np.mean(audio, axis=1)  # stereo to mono
+    # convert all files to mono
+    if audio.ndim > 1:
+        audio = np.mean(audio, axis=1)
 
-    # ensure all files use the same sample rate
+    # resample to 16KHz if needed
     if sr != SAMPLE_RATE:
-        num_samples = int(
-            SAMPLE_RATE
-            * len(audio)
-            / sr  # technical audio length (samples per sec / # of seconds)
-        )
+        num_samples = int(SAMPLE_RATE * len(audio) / sr)
         audio = scipy.signal.resample(audio, num_samples)
 
-    # Pad or trim for uniform duration
-    if len(audio) < audio_length:
-        pad = audio_length - len(audio)  # if file duration is < audio length
-        audio = np.pad(audio, (0, pad), mode="constant")  # add silence to pad the file
+    # pad/trim
+    if len(audio) < target_len:
+        pad = target_len - len(audio)
+        audio = np.pad(audio, (0, pad), mode="constant")
     else:
-        audio = audio[:audio_length]  # trim to set duration (4sec)
+        audio = audio[:target_len]
 
-    return tf.convert_to_tensor(audio, dtype=tf.float32)
-
-
-# function to get embeddings and spectrograms from yamnet
-def get_yamnet_embedding(waveform):
-    # use yamnet to get 1024-embeddings and spectrograms
-    _, embeddings, spectrogram = yamnet_model(waveform)
-    embedding = tf.reduce_mean(embeddings, axis=0)  # get mean to create feature vect
-    return embedding, spectrogram
+    return audio.astype(np.float32)
 
 
-# get all labels and embeddings for files
+def _resolve_path(row) -> str:
+    """Support both <root>/<class>/<file> and <root>/<file> layouts."""
+    c1 = os.path.join(AUDIO_ROOT_PATH, row.get("class", ""), row["slice_file_name"])
+    c2 = os.path.join(AUDIO_ROOT_PATH, row["slice_file_name"])
+    if os.path.exists(c1):
+        return c1
+    if os.path.exists(c2):
+        return c2
+    raise FileNotFoundError(f"Audio file not found: {c1} | {c2}")
+
+
+# ------------------ audio -> image features ------------------
+
+
+def wav_to_logmel_image(waveform: np.ndarray) -> np.ndarray:
+    """
+    Convert 1D waveform -> log-mel image normalized to [0,1], shape (H, W, 1).
+    Time axis is padded/cropped to TARGET_W frames.
+    """
+    mel = librosa.feature.melspectrogram(
+        y=waveform,
+        sr=SAMPLE_RATE,
+        n_fft=N_FFT,
+        hop_length=HOP_LENGTH,
+        n_mels=N_MELS,
+        power=2.0,
+        center=False,
+    )  # (n_mels, frames)
+
+    logmel = librosa.power_to_db(mel, ref=np.max)  # (n_mels, frames)
+
+    # robust per-file normalization to [0,1]
+    vmin, vmax = np.percentile(logmel, 5), np.percentile(logmel, 95)
+    if vmax <= vmin:  # degenerate edge case
+        vmax = vmin + 1.0
+    logmel = np.clip((logmel - vmin) / (vmax - vmin), 0.0, 1.0)
+
+    # pad/crop time dimension to TARGET_W
+    T = logmel.shape[1]
+    if T < TARGET_W:
+        logmel = np.pad(logmel, ((0, 0), (0, TARGET_W - T)), mode="constant")
+    elif T > TARGET_W:
+        logmel = logmel[:, :TARGET_W]
+
+    img = logmel.astype(np.float32)  # (H, W)
+    img = np.expand_dims(img, -1)  # (H, W, 1)
+    return img
+
+
+# ---------------------- dataset pipeline ---------------------
+
+
 def load_data(df, df_type):
-    yam_embeddings, labels = [], []  # init lists
-    class_spectrograms = {}
+    """
+    Build features/labels for a dataframe split.
+    Returns: (X, y) where
+      - X: np.ndarray, shape (N, TARGET_H, TARGET_W, 1)
+      - y: np.ndarray, shape (N,)
+    """
+    features, labels = [], []
+    class_example_specs = {}  # for optional plotting
 
-    # plot waveforms for each class (raw and pre-processed)
-    if df_type.lower() == "training" and SHOW_VISUALS == True:
-        get_waveform_plots(AUDIO_ROOT_PATH, df, SAMPLE_RATE, DURATION_SEC)
+    if df_type.lower() == "training" and SHOW_VISUALS:
+        get_waveform_plots(df)
 
-    print("\n")  # create space before progress bar
-    # define tqdm progress bar for ui
+    print("\n")
     progress_bar = tqdm(
         df.iterrows(),
-        total=len(df),  # dataframe length
-        ncols=100,  # progress bar width
-        desc=f"Loading {df_type} Files... ",  # prefix
-        bar_format="{desc:<30}{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt}",  # format progress bar
+        total=len(df),
+        ncols=100,
+        desc=f"Loading {df_type} Files... ",
+        bar_format="{desc:<30}{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt}",
     )
 
-    # iterate through dataframe via tqdm
     for _, row in progress_bar:
-        candidate1 = os.path.join(
-            AUDIO_ROOT_PATH, row.get("class", ""), row["slice_file_name"]
-        )
-        candidate2 = os.path.join(AUDIO_ROOT_PATH, row["slice_file_name"])
-        path = candidate1 if os.path.exists(candidate1) else candidate2
         try:
-            waveform = load_file(path)  # load the .wav file
-            embedding, spectrogram = get_yamnet_embedding(
-                waveform  # get the yamnet embedding/spectrogram
-            )
-            label_str = row["class"]  # get class name
+            path = _resolve_path(row)
+            wav = load_file(path)  # 1D float32
+            img = wav_to_logmel_image(wav)  # (H, W, 1)
+            features.append(img)
+            labels.append(row["classID"])
 
-            # plot spectrogram for each class
-            if label_str not in class_spectrograms:
-                class_spectrograms[label_str] = (
-                    spectrogram.numpy().T  # hold one spectrogram per class for visualization
-                )
-
-            yam_embeddings.append(
-                embedding.numpy()  # add the embedding mean to the list
-            )
-            labels.append(row["classID"])  # add the label to the list
-        # throw error if preprocessing fails
+            # keep one spectrogram per class for visualization
+            cls = row.get("class", str(row["classID"]))
+            if SHOW_VISUALS and cls not in class_example_specs:
+                # store as (H, W) for your plotting util (transpose if it expects time x freq)
+                class_example_specs[cls] = img.squeeze(2)  # (H, W)
         except Exception as e:
-            print(f"Skipping {path}: {e}")
+            print(f"Skipping {row.get('slice_file_name', '?')}: {e}")
 
-    if df_type.lower() == "validation" and SHOW_VISUALS == True:
-        # create plot w/ a spectrogram for each class
-        plot_spectrograms(class_spectrograms)
+    if not features:
+        raise RuntimeError(
+            f"No features generated for df_type={df_type}. "
+            f"Check AUDIO_ROOT_PATH='{AUDIO_ROOT_PATH}' and that files exist."
+        )
 
-    return np.stack(yam_embeddings), np.array(labels)  # return features/labels
+    X = np.stack(features)  # (N, H, W, 1)
+    y = np.array(labels)
+
+    # if df_type.lower() == "validation" and SHOW_VISUALS and class_example_specs:
+    #     # Your plot_spectrograms previously expected dict of class -> spectrogram.
+    #     # If it expects (time x freq), flip/transpose as needed there.
+    #     plot_spectrograms(class_example_specs)
+
+    return X, y
 
 
-# plot class waveforms
+# ------------------------- visuals ---------------------------
+
+
 def get_waveform_plots(df):
-    # init dics to track which classes have waveforms
+    """Collect one raw waveform per class and plot (optional)."""
     class_waveforms_raw = {}
-
-    # iterate through df until we have a sample for each class
     for _, row in df.iterrows():
-        label = row["class"]  # get label
+        label = row.get("class", str(row["classID"]))
+        if label in class_waveforms_raw:
+            continue
+        try:
+            file_path = _resolve_path(row)
+            raw_audio, sr = sf.read(file_path, always_2d=False)
+            if raw_audio.ndim > 1:
+                raw_audio = np.mean(raw_audio, axis=1)
+            class_waveforms_raw[label] = (raw_audio, sr)
+        except Exception as e:
+            print(f"Failed to load for waveform plot: {e}")
 
-        # add label to dict if it doesnt exist
-        if label not in class_waveforms_raw:
-            file_path = os.path.join(
-                AUDIO_ROOT_PATH, row["class"], row["slice_file_name"]
-            )
-
-            try:
-                # get raw audio
-                raw_audio, sr = sf.read(file_path)  # load file
-                class_waveforms_raw[label] = (raw_audio, sr)  # add to dict
-
-            except Exception as e:
-                print(f"Failed to load from {file_path}: {e}")
-
-        # stop iterating through df once we have all classes
         if len(class_waveforms_raw) == df["class"].nunique():
             break
 
-    plot_waveform(class_waveforms_raw)  # plot raw waveforms
+    # if class_waveforms_raw:
+    #     plot_waveform(class_waveforms_raw)
