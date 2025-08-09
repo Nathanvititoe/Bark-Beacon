@@ -16,14 +16,10 @@ def get_train_val_split(df):
     )
 
     # preprocess/load the training data
-    train_features, train_labels = load_data(
-        AUDIO_ROOT_PATH, train_data, SAMPLE_RATE, DURATION_SEC, df_type="training"
-    )
+    train_features, train_labels = load_data(train_data, df_type="training")
 
     # preprocess/load the validation data
-    val_features, val_labels = load_data(
-        AUDIO_ROOT_PATH, val_data, SAMPLE_RATE, DURATION_SEC, df_type="validation"
-    )
+    val_features, val_labels = load_data(val_data, df_type="validation")
 
     # oversample to help with class imbalance
     ros = RandomOverSampler(random_state=42)

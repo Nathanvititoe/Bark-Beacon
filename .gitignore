@@ -3,4 +3,5 @@ venv
 pycache
 *.pyc
 .gitignore
-vocalization_classifier/models/*
+models/*
+!models/.gitkeep

@@ -55,9 +55,7 @@ def compare_models(val_features, val_labels):
     # get full model
     model = tf.keras.models.load_model(FULL_MODEL_PATH)
 
-    interpreter, input_details, output_details = load_lite_model(
-        LITE_MODEL_PATH
-    )  # load lite model
+    interpreter, input_details, output_details = load_lite_model()  # load lite model
 
     # get inferences in same format
     tflite_preds_classes = lite_inference(

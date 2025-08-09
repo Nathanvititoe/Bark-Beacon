@@ -87,7 +87,7 @@ def get_prediction(classifier):
 
         try:
             # load the file and preprocess (returns _,1024 shape)
-            waveform = load_file(filepath, SAMPLE_RATE, num_samples)
+            waveform = load_file(filepath)
         except Exception as e:
             print(f"Failed to load or preprocess the audio file: {e}")
             return

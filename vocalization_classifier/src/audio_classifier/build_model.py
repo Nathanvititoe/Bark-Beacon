@@ -3,6 +3,7 @@ from tensorflow.keras.optimizers import AdamW  # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau  # type: ignore
 from sklearn.utils import class_weight
 import numpy as np
+from pathlib import Path
 from src.ui.cleanup import MemoryCleanupCallback
 from ConvertForArduino.analyze_tflite import analyze_tflite_model
 from ConvertForArduino.get_cpp_version import (
@@ -16,9 +17,7 @@ from config import (
     NUM_EPOCHS,
     BATCH_SIZE,
     FULL_MODEL_PATH,
-    LITE_MODEL_PATH,
     SHOW_VISUALS,
-    LABEL_NAMES,
     USER_PREDICT,
 )
 from src.ui.user_input import get_prediction
@@ -133,33 +132,31 @@ returns the full model history
 
 
 def create_and_train(train_features, train_labels, val_features, val_labels):
-    audio_classifier = create_classifier(NUM_CLASSES)
+    audio_classifier = create_classifier()
     classifier_history = train_classifier(
         audio_classifier,
         train_features,
         train_labels,
         val_features,
         val_labels,
-        NUM_EPOCHS,
-        BATCH_SIZE,
     )
     # save models
+    Path(FULL_MODEL_PATH).parent.mkdir(parents=True, exist_ok=True)
     audio_classifier.save(FULL_MODEL_PATH)  # save full model to .keras file
-    convert_for_microcontroller(FULL_MODEL_PATH, LITE_MODEL_PATH)  # get tflite model
-    convert_tflite_to_cpp(LITE_MODEL_PATH)  # get cpp files for tflite model
+    convert_for_microcontroller()  # get tflite model
+    convert_tflite_to_cpp()  # get cpp files for tflite model
 
     # plot training results
     if SHOW_VISUALS:
         plot_confusion_matrix(
             audio_classifier,
             val_features,
-            val_labels,
-            LABEL_NAMES,  # create confusion matrix
+            val_labels,  # create confusion matrix
         )
         visualize_stats(classifier_history)  # visualize the loss/acc
 
     # print tflite model specs for using in Arduino
-    analyze_tflite_model(LITE_MODEL_PATH)
+    analyze_tflite_model()
 
     if USER_PREDICT:
         # prompt user to input files for model prediction

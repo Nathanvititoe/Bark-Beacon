@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import ConfusionMatrixDisplay
 from IPython.display import Audio, display, Markdown
+from config import CLASS_NAMES, SAMPLE_RATE, DURATION_SEC
 
 plt.style.use("dark_background")
 
@@ -151,24 +152,21 @@ def plot_spectrograms(class_spectrograms):
 
 
 # function to display an audio sample to the user
-def audio_sampler(filepath, sample_rate, duration, label):
+def audio_sampler(filepath, label):
     from src.prep_data.preprocess import load_file  # import here to avoid cyclic error
 
     try:
-        num_samples = sample_rate * duration  # get num_samples
-        audio = load_file(
-            filepath, sample_rate, num_samples
-        ).numpy()  # load sample file
+        audio = load_file(filepath).numpy()  # load sample file
 
         display(Markdown(f"**{label}**"))  # add title
-        display(Audio(audio, rate=sample_rate))  # show audio sample
+        display(Audio(audio, rate=SAMPLE_RATE))  # show audio sample
 
     except Exception as e:
         print(f"Could not load {filepath}:\n→ {e}")
 
 
 # function to display confusion matrix and monitor what the model is struggling with
-def plot_confusion_matrix(audio_classifier, val_features, val_labels, label_names):
+def plot_confusion_matrix(audio_classifier, val_features, val_labels):
     print("Loading Features for Confusion Matrix...")
     y_pred = audio_classifier.predict(
         val_features
@@ -183,7 +181,7 @@ def plot_confusion_matrix(audio_classifier, val_features, val_labels, label_name
     disp = ConfusionMatrixDisplay.from_predictions(
         val_labels,  # validation labels
         y_pred_labels,  # prediction labels
-        display_labels=label_names,  # names of labels
+        display_labels=CLASS_NAMES,  # names of labels
         cmap="plasma",  # color scheme
         ax=ax,  # use plt subplot for display
         colorbar=False,  # turn off built in colorbar scale

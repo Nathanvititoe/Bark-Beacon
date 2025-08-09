@@ -100,5 +100,4 @@ def convert_tflite_to_cpp():
 
 
 if __name__ == "__main__":
-    tf_lite_model = os.path.join(MODEL_DIR, "BarkBeacon_Lite.tflite")
-    convert_tflite_to_cpp(tf_lite_model)
+    convert_tflite_to_cpp() # gets tflite model from the models dir (should be only one)

@@ -55,15 +55,11 @@ def get_yamnet_embedding(waveform):
 
 # get all labels and embeddings for files
 def load_data(df, df_type):
-    target_num_samples = (
-        SAMPLE_RATE
-        * DURATION_SEC  # technical length of file (samples per sec * # of seconds)
-    )
     yam_embeddings, labels = [], []  # init lists
     class_spectrograms = {}
 
     # plot waveforms for each class (raw and pre-processed)
-    if df_type.lower() == "training" & SHOW_VISUALS == True:
+    if df_type.lower() == "training" and SHOW_VISUALS == True:
         get_waveform_plots(AUDIO_ROOT_PATH, df, SAMPLE_RATE, DURATION_SEC)
 
     print("\n")  # create space before progress bar
@@ -78,13 +74,13 @@ def load_data(df, df_type):
 
     # iterate through dataframe via tqdm
     for _, row in progress_bar:
-        path = os.path.join(
-            AUDIO_ROOT_PATH, row["class"], row["slice_file_name"]  # get full file path
+        candidate1 = os.path.join(
+            AUDIO_ROOT_PATH, row.get("class", ""), row["slice_file_name"]
         )
+        candidate2 = os.path.join(AUDIO_ROOT_PATH, row["slice_file_name"])
+        path = candidate1 if os.path.exists(candidate1) else candidate2
         try:
-            waveform = load_file(
-                path, SAMPLE_RATE, target_num_samples  # load the .wav file
-            )
+            waveform = load_file(path)  # load the .wav file
             embedding, spectrogram = get_yamnet_embedding(
                 waveform  # get the yamnet embedding/spectrogram
             )
@@ -104,7 +100,7 @@ def load_data(df, df_type):
         except Exception as e:
             print(f"Skipping {path}: {e}")
 
-    if df_type.lower() == "validation" & SHOW_VISUALS == True:
+    if df_type.lower() == "validation" and SHOW_VISUALS == True:
         # create plot w/ a spectrogram for each class
         plot_spectrograms(class_spectrograms)
 
