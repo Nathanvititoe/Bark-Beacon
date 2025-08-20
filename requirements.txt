@@ -1,8 +1,6 @@
 ai_edge_litert
-imblearn
-ipython
+kaggle
 librosa
-matplotlib
 noisereduce
 numba
 numpy

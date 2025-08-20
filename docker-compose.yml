@@ -1,5 +1,6 @@
 services:
-  app:
+  bark-beacon:
+    container_name: bark-beacon
     build:
       context: .
       dockerfile: Dockerfile
@@ -11,7 +12,8 @@ services:
     working_dir: /workspace
     environment:
       MPLBACKEND: "Agg"
-      TF_CPP_MIN_LOG_LEVEL: "1"
+      PYTHONDONTWRITEBYTECODE: 1
+      TF_CPP_MIN_LOG_LEVEL: 3 
       # Optional: change what runs without touching the image
       # APP_CMD: "python vocalization_classifier/main.py --epochs 50"
     volumes:

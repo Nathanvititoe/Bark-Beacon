@@ -86,7 +86,10 @@ def compare_models(val_features, val_labels):
             lite_acc_color,
         )
     )
+    # check full model size for comparison
+    full_model_size_kb = os.path.getsize(FULL_MODEL_PATH) / 1024
+    print(f"\nFull Keras model size: {full_model_size_kb:.2f} KB")
 
-    # check model size for integration
-    model_size_kb = os.path.getsize(LITE_MODEL_PATH) / 1024
-    print(f"\nQuantized TFLite model size: {model_size_kb:.2f} KB")
+    # check lite model size for integration
+    lite_model_size_kb = os.path.getsize(LITE_MODEL_PATH) / 1024
+    print(f"\nQuantized TFLite model size: {lite_model_size_kb:.2f} KB")

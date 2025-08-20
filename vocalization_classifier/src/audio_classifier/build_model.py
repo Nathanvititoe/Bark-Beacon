@@ -16,25 +16,25 @@ from config import (
     # SHOW_VISUALS,
     # USER_PREDICT,
 )
+
 # from src.ui.user_input import get_prediction
 # from src.ui.visualization import plot_confusion_matrix, visualize_stats
 
 """
-Test conversion for YAMNet removal
-Updated for spectrogram-image inputs (H, W, 1). No YAMNet dependency.
+This file creates the audio classification model, trains it on the training dataset
+and then saves the keras file, converts to TFLite, and converts to cpp/h files. 
+Lastly, the TFLite model is ran through an analysis script to print input/output details
 """
-
-
-# ---- CHANGED: 2D CNN that accepts spectrogram images ----
+# ---- Create CNN to classify spectrograms ----
 def create_classifier(input_shape):
     if NUM_CLASSES < 1:
         raise ValueError("num_classes must be at least 1")
     if len(input_shape) != 3:
         raise ValueError(f"Expected image input (H,W,1), got {input_shape}")
 
-    m = models.Sequential(
+    model = models.Sequential(
         [
-            layers.Input(shape=input_shape),  # e.g., (64, 256, 1)
+            layers.Input(shape=input_shape),
             layers.Conv2D(32, 3, padding="same", activation="relu"),
             layers.BatchNormalization(),
             layers.MaxPool2D(2),
@@ -53,19 +53,21 @@ def create_classifier(input_shape):
         ]
     )
 
-    m.compile(
+    model.compile(
         optimizer=AdamW(learning_rate=9e-4, weight_decay=7e-2),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
-    return m
+    return model
 
 
+# train the model on the training dataset, using these configured hyperparameters
 def train_classifier(
     audio_classifier, train_features, train_labels, val_features, val_labels
 ):
     print("\n")
 
+    # stop early if learning slows too much
     early_stopping = EarlyStopping(
         monitor="val_loss",
         patience=10,
@@ -74,6 +76,7 @@ def train_classifier(
         verbose=1,
     )
 
+    # slow learning during plateaus
     reduce_lr = ReduceLROnPlateau(
         monitor="val_loss",
         factor=0.5,
@@ -84,8 +87,10 @@ def train_classifier(
         lower_is_better=True,
     )
 
+    # cleanup ram/gpu after each epoch
     epoch_cleanup = MemoryCleanupCallback()
 
+    # apply weights to offset class imbalance
     weights = class_weight.compute_class_weight(
         class_weight="balanced",
         classes=np.unique(train_labels),
@@ -93,6 +98,7 @@ def train_classifier(
     )
     class_weights = dict(enumerate(weights))
 
+    # get the model history
     history = audio_classifier.fit(
         train_features,
         train_labels,
@@ -106,14 +112,9 @@ def train_classifier(
     return history
 
 
-"""
-Unified: build, train, save .keras, convert to TFLite and C array.
-"""
-
-
+# combined logic for creating, training and saving the model, also saves converted to tflite and cpp
 def create_and_train(train_features, train_labels, val_features, val_labels):
-    # ---- CHANGED: infer image input shape from features ----
-    input_shape = tuple(train_features.shape[1:])  # e.g., (64, 256, 1)
+    input_shape = tuple(train_features.shape[1:])
     audio_classifier = create_classifier(input_shape=input_shape)
 
     history = train_classifier(
@@ -139,6 +140,6 @@ def create_and_train(train_features, train_labels, val_features, val_labels):
     analyze_tflite_model()
 
     # if USER_PREDICT:
-        # get_prediction(audio_classifier, train_features)
+    # get_prediction(audio_classifier, train_features)
 
     return history

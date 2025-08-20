@@ -2,19 +2,21 @@
 import sys
 from pathlib import Path
 
+from src.checks.warning_level import change_logging
+
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+change_logging()  # limit logs that clog the terminal
 
 # import libraries and files
 from src.prep_data.get_df import build_dataframe
 from vocalization_classifier.src.audio_classifier.build_model import create_and_train
 from src.ui.cleanup import final_cleanup
-from src.checks.warning_level import change_logging
 from tf_lite_utils.tflite_utils import compare_models
 from src.prep_data.get_split import get_train_val_split
 
-change_logging()  # clean up terminal output
 
 """
 Main will load and split the dataset, create and train the full model (.keras), convert to tflite (.tflite),
@@ -34,7 +36,6 @@ classifier_history = create_and_train(
 
 # compare full model v tflite model accuracy
 compare_models(val_features, val_labels)
-print(val_features.min(), val_features.max())
 
 final_cleanup()
 print("Exiting...")
