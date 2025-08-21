@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-import src.prep_data.preprocess as pp
+import vocalization_classifier.src.prep_data.preprocess as pp
 
 # test the data pipeline to ensure audio files make it through the whole process and 
 # come out with the correct shape to match the model input

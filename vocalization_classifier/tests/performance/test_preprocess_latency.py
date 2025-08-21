@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import pytest
-import src.prep_data.preprocess as pp
+import vocalization_classifier.src.prep_data.preprocess as pp
 
 MAX_SPEC_MS = 120
 

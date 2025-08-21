@@ -2,7 +2,7 @@ import os
 import glob
 import numpy as np
 import pytest
-import src.prep_data.preprocess as pp
+import vocalization_classifier.src.prep_data.preprocess as pp
 from ai_edge_litert.interpreter import Interpreter
 
 

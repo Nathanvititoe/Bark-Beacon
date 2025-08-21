@@ -1,8 +1,9 @@
 import numpy as np
-import src.prep_data.preprocess as pp
-
+import vocalization_classifier.src.prep_data.preprocess as pp
+import pytest
 
 # test output shape when converting to spectrograms
+@pytest.mark.unit
 def test_audio_to_image_shape_and_range(sr):
     # create mock waveform
     t = np.arange(sr) / sr
@@ -17,6 +18,7 @@ def test_audio_to_image_shape_and_range(sr):
 
 
 # test edgecase of silent audio sample
+@pytest.mark.unit
 def test_audio_to_image_silent_edgecase(sr):
     # create mock silent signal
     x = np.zeros(sr, dtype=np.float32)

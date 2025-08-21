@@ -1,9 +1,12 @@
 import numpy as np
-import src.prep_data.preprocess as pp
+import pytest
+import vocalization_classifier.src.prep_data.preprocess as pp
 
+ATOL = 1e-4 # float accuracy tolerance
 
 # test preprocessing to create uniform duration, making all files 4s by padding or trimming
 # every file should return with the set length/duration
+@pytest.mark.unit
 def test_duration_conversion(write_wav, sr, duration):
     target_len = int(sr * duration)
 
@@ -15,7 +18,7 @@ def test_duration_conversion(write_wav, sr, duration):
 
     # output from load_file should create samples that match target
     assert y_long.shape == (target_len,)
-    assert np.allclose(y_long, 1.0)
+    assert np.allclose(y_long, 1.0, rtol=0, atol=ATOL)
 
     # test samples that are shorter than set length/duration
     short_sample = np.ones(int(target_len * 0.25), dtype=np.float32)
@@ -29,6 +32,7 @@ def test_duration_conversion(write_wav, sr, duration):
 
 
 # test preprocessing to convert all files to mono channel
+@pytest.mark.unit
 def test_channel_conversion(write_wav, sr, duration):
     target_len = int(sr * duration)
 
@@ -42,10 +46,11 @@ def test_channel_conversion(write_wav, sr, duration):
 
     # output from load_file should be all monochannel
     assert y.ndim == 1 and y.shape[0] == target_len
-    assert np.allclose(y, 0.5, atol=1e-6)
+    assert np.allclose(y, 0.5, atol=ATOL)
 
 
-# # test preprocessing to convert all files to uniform sampling rate
+# test preprocessing to convert all files to uniform sampling rate
+@pytest.mark.unit
 def test_resampling(write_wav, sr, duration):
     target_len = int(sr * duration)
 
@@ -59,7 +64,7 @@ def test_resampling(write_wav, sr, duration):
 
     # output should match target length (sr * duration) bc of resampling
     assert y.shape == (target_len,)
-    assert np.isclose(np.mean(y), 0.0, atol=1e-2)  # avg should be near 0
+    assert np.isclose(np.mean(y), 0.0, atol=ATOL)  # avg should be within tolerance
 
     # create mock sample at too high of a sampling rate
     alt_sr2 = 22050

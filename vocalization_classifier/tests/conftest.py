@@ -5,9 +5,10 @@ import os
 import numpy as np
 import soundfile as sf
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
+# add root path as variable for easy imports
+ROOT = pathlib.Path(__file__).resolve().parents[2]  
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 # defined sampling rate for tests
 @pytest.fixture(scope="session")
@@ -20,8 +21,8 @@ def duration():
     return 1
 
 @pytest.fixture(autouse=True)
-def patch_config(monkeypatch, sr):
-    import src.prep_data.preprocess as pp
+def patch_config(monkeypatch, sr, duration):
+    import vocalization_classifier.src.prep_data.preprocess as pp
     import config
 
     # ensure sample rate config applies correctly
@@ -61,7 +62,7 @@ def write_wav(tmp_path):
     def _write(rel_path: str, data: np.ndarray, sr: int):
         out = tmp_path / "audio_root" / rel_path
         out.parent.mkdir(parents=True, exist_ok=True)
-        sf.write(out, data.astype(np.float32), sr)
+        sf.write(out, data.astype(np.float32), sr, subtype="FLOAT")
         return str(out)
 
     return _write
