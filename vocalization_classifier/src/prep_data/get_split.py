@@ -1,5 +1,5 @@
 from sklearn.model_selection import train_test_split
-from vocalization_classifier.src.prep_data.preprocess import load_data
+from vocalization_classifier.src.prep_data.preprocess.preprocess import load_data
 from config import VALID_SPLIT
 
 """

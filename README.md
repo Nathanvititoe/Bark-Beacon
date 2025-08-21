@@ -1,6 +1,8 @@
 # Bark Beacon: Dog Vocalization Classifier
 
-A custom audio classification model for classifying dog vocalizations (bark, growl, whine, howl) using transfer learning with TensorFlow and YAMNet, and then converted to TensorFlow Lite and C++/header pairs for deployment on an Arduino Nano 33 BLE Sense Rev2.
+A custom audio classification model for classifying dog vocalizations (bark, growl, whine, howl) using with TensorFlow 
+
+After saving the full model in a .keras file, it is converted to TensorFlow Lite and a C++/header file so that it can be used on development boards like the Arduino Nano 33 BLE Sense Rev2 or ESP32.
 
 ---
 
@@ -18,12 +20,29 @@ To set up Tensorflow on 50 series GPU's follow this guide to run it all in Docke
 
 ---
 ### THIS IS OUT OF DATE FOR THE CURRENT FILE STRUCTURE
-## Assets
-
-- **Images**:  
+#### ➤ `images/`:  
   Includes various screenshots captured throughout model development.
 
-- **Visualizations**:  
+#### ➤ `Models/`
+Contains trained model artifacts:
+- `.keras` files – Full models
+- `.tflite` files – Quantized models for embedded inference
+- `.cpp` files – C++ arrays of TFLite models for Arduino integration
+- `.h` files - header files that pair with the C++ models
+On GitHub this only contains the `latest` directory, converted .cpp/.h files from the latest TFLite model
+However, in development, everytime main is run, this folder is populated with a .keras file (full model), .tflite file (lite model), and a directory containing a .cpp and .h for the latest version created (labeled as "_v(x)")
+  
+#### ➤ `old_yam_build/`
+  this directory is not used anywhere else in the application, it is simply saved versions of the preprocessing and model build from when I utilized YAMNet for transfer learning, in case I ever need to utilize it. 
+
+#### ➤ `standalone_scripts/`
+  Contains scripts used to assist in data collection, for increasing the size of the dataset, therefore increasing model accuracy. 
+  
+  - *combine_datasets.py* : walks through all directories in the dataset directory and combines their files into a single `combined` folder, creating subdirectories for each class (bark, growl, howl, whine) and inferring which files belong to each class based on their file names. 
+  - *extract_audio.py* : used to convert a .mp4 video file to a .wav audio format so that it can be used as an audio sample within the dataset
+  - *urbanaudiopull.py* : quick, simple script to pull the UrbanSound8k dataset from kaggle using an api key, it then extracts 600 files, evenly distributed between UrbanSound8k classes (defined in the csv), excluding any classes related to dogs, it then places them in `dataset/combined` under the `unknown` subdirectory as a collection of unknown samples for the model to differentiate dog vocalizations from other sounds. 
+
+#### ➤ `visualizations/`
   Generated using `matplotlib`:
   - Raw audio waveforms  
   - Mel spectrograms  
@@ -35,24 +54,39 @@ To set up Tensorflow on 50 series GPU's follow this guide to run it all in Docke
 
 ### `vocalization_classifier/`
 
-#### ➤ `ConvertForArduino/`
+#### ➤ `arduino_conversion/`
 Scripts to prepare models for Arduino microcontroller deployment:
 - `get_lite_model.py`: Converts the full, trained `.keras` model to TensorFlow Lite format.
-- `get_cpp_array.py`: Converts a `.tflite` model to a `.cpp` array (needed for Arduino inference) with a matching header file (`.h`).
-
-#### ➤ `Models/`
-Contains trained model artifacts:
-- `.keras` files – Full models
-- `.tflite` files – Quantized models for embedded inference
-- `.cpp` files – C++ arrays of TFLite models for Arduino integration
-- `.h` files - header files that pair with the C++ models
+- `get_cpp_version.py`: Converts a `.tflite` model to a `.cpp` array (needed for Arduino inference) with a matching header file (`.h`).
+- `analyze_tflite.py`: Analyzes the saved `.tflite` file from within the `/models` directory, outputting input/output tensor details, as well as a rough estimate of the required tensor arena size, to assist in Arduino IDE configuration (embedded code)
 
 #### ➤ `src/`
 All logic for:
-- Creating the model architecture
-- Training
 - Data loading and preprocessing
+  - `/prep_data` - contains all files and logic used for loading audio files, making them uniform, splitting into training and validation sets, and converting to a dataframe
+- Creating/Training the Audio Classifier
+  - `/audio_classifier` - all files and logic for creating and training the model
 - Dataset visualization
+  - `/ui` - collection of functions/files for displaying data in matplotlib graphs and matrices
+- 
+#### ➤ `test_audio/`
+Small collection of audio files not found within the dataset, used for automated and manual testing
+Unknown samples are used to test the model on audio that isnt a dog vocalization, verifying that it infers "unknown"
+- dog barks (2)
+- dog growl (1) 
+- dog howl (1)
+- dog whine (1)
+- wolf howl (1) : (for confidence test)
+- baby crying (1) : unknown sample
+- dishes clanking (1) : unknown sample
+- music (1) : unknown sample
+- people talking (1) : unknown sample
+
+#### ➤ `tests/`
+  - `/unit` : collection of unit tests for verifying the functionality and outputs of the preprocessing pipeline
+  - `/integration` : collection of integration tests for end-to-end testing and whole pipeline functionality
+  - `/performance` : simple tests for checking model size/footprint and latency are under configured maximum values (the best test for model performance is validation accuracy)
+  - `configure_tests.py` : sets testing variables and configuration
 
 #### ➤ `tf_lite_utils/`
 Utility functions for working with TensorFlow Lite:
@@ -68,21 +102,10 @@ combines the entire pipeline:
 - Dataset splitting  
 - Model training  
 - Model conversion to TFLite  
-- Accuracy comparison between `.keras` and `.tflite` models
 ---
 
-## Utility Scripts
 
-- **`combine_datasets.py`**  
-  Combines all collected dataset folders into a single `combined` set containing only the needed classes: `bark`, `growl`, `whine`, `howl`  
-  *(Class names are pulled from the filenames)*
-
-- **`extract_audio.py`**  
-  Preprocesses individual audio clips:
-  - Converts all clips to mono, 16kHz  
-  - Applies background noise removal using a 0.1 second sample for denoising (most samples are very short so the denoise sample must be even shorter)
-
-# Running on Arduino
+# Running on Arduino or ESP32 in the Arduino IDE
 **Reference:** [Arduino Nano 33 BLE Sense ML Guide](https://docs.arduino.cc/tutorials/nano-33-ble-sense/get-started-with-machine-learning/)
 
 ### If the model is already trained

@@ -4,5 +4,8 @@ pycache
 *.pyc
 .gitignore
 models/*
+!models/latest
+# !models/BarkBeacon_Full.keras
+# !models/BarkBeacon_Lite.tflite
 !models/.gitkeep
 old_yam_build/*

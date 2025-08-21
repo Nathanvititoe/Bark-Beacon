@@ -10,13 +10,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent  # Repo Root
 # Directory paths
 DATASET_DIR = PROJECT_ROOT / "dataset" / "combined"
 BASE_LOGIC_DIR = os.path.dirname(
-    os.path.abspath(__file__)
-)  # vocalization classifier dir
+    os.path.abspath(__file__) # vocalization classifier dir
+)  
 MODEL_DIR = os.path.join(BASE_LOGIC_DIR, "models")
 
 FULL_MODEL_PATH = os.path.join(MODEL_DIR, "BarkBeacon_Full.keras")
 LITE_MODEL_PATH = os.path.join(MODEL_DIR, "BarkBeacon_Lite.tflite")
 AUDIO_ROOT_PATH = os.getenv("AUDIO_ROOT_PATH", str(DATASET_DIR))
+TEST_AUDIO_DIR = os.path.join(BASE_LOGIC_DIR, "test_audio")
 
 # Model config options
 SHOW_VISUALS = False

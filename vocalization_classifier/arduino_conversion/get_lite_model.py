@@ -4,7 +4,7 @@ from tf_lite_utils.converter.tflite_converter import (
     analyze_tflite_model,
 )
 from src.prep_data.get_df import build_dataframe
-from vocalization_classifier.src.prep_data.preprocess import load_data
+from vocalization_classifier.src.prep_data.preprocess.preprocess import load_data
 
 """
  This is meant to be a standalone script separate from main, that can be run to create a tf lite file (.tflite)
