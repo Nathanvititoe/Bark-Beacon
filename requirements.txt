@@ -14,5 +14,4 @@ tensorflow
 tensorflow_hub
 termcolor
 tqdm
-pytest 
 pytest-cov
