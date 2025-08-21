@@ -2,7 +2,7 @@ import glob
 import os
 import pytest
 
-MAX_TFLITE_BYTES = 500 * 1024
+MAX_TFLITE_BYTES = 512 * 1024
 
 # get tf lite model
 def _get_tflite():

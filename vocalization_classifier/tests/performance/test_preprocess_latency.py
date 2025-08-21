@@ -2,7 +2,6 @@ import time
 import numpy as np
 import pytest
 import src.prep_data.preprocess as pp
-import os
 
 MAX_SPEC_MS = 120
 

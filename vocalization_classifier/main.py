@@ -12,7 +12,7 @@ change_logging()  # limit logs that clog the terminal
 
 # import libraries and files
 from src.prep_data.get_df import build_dataframe
-from vocalization_classifier.src.audio_classifier.build_model import create_and_train
+from src.audio_classifier.build_model import create_and_train
 from src.ui.cleanup import final_cleanup
 from tf_lite_utils.tflite_utils import compare_models
 from src.prep_data.get_split import get_train_val_split

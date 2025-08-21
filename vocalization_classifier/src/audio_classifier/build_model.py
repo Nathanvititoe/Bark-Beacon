@@ -5,9 +5,9 @@ from sklearn.utils import class_weight
 import numpy as np
 from pathlib import Path
 from src.ui.cleanup import MemoryCleanupCallback
-from ConvertForArduino.analyze_tflite import analyze_tflite_model
-from ConvertForArduino.get_cpp_version import convert_tflite_to_cpp
-from tf_lite_utils.converter.tflite_converter import convert_for_microcontroller
+from arduino_conversion.analyze_tflite import analyze_tflite_model
+from arduino_conversion.get_cpp_version import convert_tflite_to_cpp
+from vocalization_classifier.tf_lite_utils.tflite_converter import convert_for_microcontroller
 from config import (
     NUM_CLASSES,
     NUM_EPOCHS,
