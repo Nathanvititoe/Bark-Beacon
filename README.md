@@ -84,7 +84,7 @@ Unknown samples are used to test the model on audio that isnt a dog vocalization
 
 #### ➤ `tests/`
   - `/unit` : collection of unit tests for verifying the functionality and outputs of the preprocessing pipeline
-  - `/integration` : collection of integration tests for end-to-end testing and whole pipeline functionality
+  - `/integration` : tests the data pipeline end to end
   - `/performance` : simple tests for checking model size/footprint and latency are under configured maximum values (the best test for model performance is validation accuracy)
   - `configure_tests.py` : sets testing variables and configuration
 
